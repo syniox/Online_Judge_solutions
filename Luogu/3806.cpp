@@ -2,8 +2,8 @@
 #include<cstdio>
 #include<cstring>
 using namespace std;
-const int N=10000;
-const char ot[2][4]={"AYE","NAY"};
+const int N=10005;
+const char ot[2][4]={"NAY","AYE"};
 int n,m,cnt,fir[N];
 int rt,sz[N],dis[N],que[N],mxs[N],ans[10000005];
 bool vis[N];
@@ -56,7 +56,7 @@ void fsm(int x,int t,int fg){
 	}
 }
 void ask(int x){
-	printf("%d\n",x);
+//	printf("%d\n",x);
 	vis[x]=1;
 	fsm(x,0,1);
 	for(int i=fir[x];i;i=eg[i].nx){
@@ -80,9 +80,9 @@ int main(){
 	mxs[0]=1e8;
 	frt(1,0,n);
 	ask(rt);
-	for(int i=1;i<=1000000;++i){
-		if(ans[i]) printf("%d ",i);
-	}
+//	for(int i=1;i<=1000000;++i){
+//		if(ans[i]) printf("%d ",i);
+//	}
 	for(int i=1;i<=m;++i){
 		printf("%s\n",ot[ans[nxi()]]);
 	}
