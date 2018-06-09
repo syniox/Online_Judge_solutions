@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+#temp files
+*.swp
+*.in
