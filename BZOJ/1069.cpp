@@ -25,29 +25,26 @@ inline int nxi(){
 	return x;
 }
 inline double jdg(pnt &a,pnt &b,pnt &c){
-	pnt x=(pnt){a.x-b.x,a.y-b.y};
-	pnt y=(pnt){b.x-c.x,b.y-c.y};
+	pnt x=(pnt){b.x-a.x,b.y-a.y};
+	pnt y=(pnt){c.x-b.x,c.y-b.y};
 	return x*y;
 }
 double solve(){
 	double ans=0;
-	for(int i=1;i<n-2;++i){
+	for(int i=1;i<cnt-2;++i){
 		int k=i+1,l=i+3;
 		pnt &x=pt[st[i]];
-		for(int j=1;j<n;++j){
+		for(int j=1;j<cnt;++j){
 			pnt &y=pt[st[j]];
 			while(k<j&&(pt[st[k]]-x)*(y-x)<(pt[st[k+1]]-x)*(y-x)) ++k;
 			while(l<cnt&&(y-x)*(pt[st[l]]-x)<(y-x)*(pt[st[l+1]]-x)) ++l;
-			ans=max(ans,((y-x)*(pt[st[k]]-x)+(y-x)*(pt[st[l]]-x))/2);
+			ans=max(ans,((pt[st[k]]-x)*(y-x)+(y-x)*(pt[st[l]]-x))/2);
 		}
 	}
 	return ans;
 }
 int main(){
 	n=nxi();
-	for(int i=1;i<=n;++i){
-		scanf("%lf%lf",&pt[i].x,&pt[i].y);
-	}
 	sort(pt+1,pt+n+1);
 	st[++cnt]=1;
 	st[++cnt]=2;
@@ -55,10 +52,10 @@ int main(){
 		while(cnt>1&&jdg(pt[cnt-1],pt[cnt],pt[i])<0) --cnt;
 		st[++cnt]=i;
 	}
-	int tp=cnt;
 	st[++cnt]=n-1;
+	int tp=cnt;
 	for(int i=n-2;i;--i){
-		while(cnt>tp&&jdg(pt[cnt-1],pt[cnt],pt[i])<0) --cnt;
+		while(cnt>tp&&jdg(pt[cnt-1],pt[cnt],pt[i])>0) --cnt;
 		st[++cnt]=i;
 	}
 	printf("%.3lf\n",solve());
