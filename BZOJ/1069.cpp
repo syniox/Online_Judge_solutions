@@ -32,10 +32,10 @@ double solve(){
 	for(int i=1;i<cnt-2;++i){
 		int k=i+1,l=i+3;
 		pnt &x=pt[st[i]];
-		for(int j=1;j<cnt;++j){
+		for(int j=i+2;j<cnt;++j){
 			pnt &y=pt[st[j]];
 			while(k<j&&(pt[st[k]]-x)*(y-x)<(pt[st[k+1]]-x)*(y-x)) ++k;
-			while(l<cnt&&(y-x)*(pt[st[l]]-x)<(y-x)*(pt[st[l+1]]-x)) ++l;
+			while(l==j||(l<cnt&&(y-x)*(pt[st[l]]-x)<(y-x)*(pt[st[l+1]]-x))) ++l;
 			ans=max(ans,((pt[st[k]]-x)*(y-x)+(y-x)*(pt[st[l]]-x))/2);
 		}
 	}
