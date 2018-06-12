@@ -36,7 +36,7 @@ void init(double t){
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
 			if(map[i][j]){
-				add(i,j,1000);
+				add(i,j+N,1000);
 			}
 		}
 	}
@@ -76,7 +76,7 @@ inline bool jdg(double t){
 	double ans=0;
 	init(t);
 	while(bfs()) ans+=dfs(0,50005);
-	return fabs(ans-sum)<1e6;
+	return fabs(ans-sum)<1e-5;
 }
 int main(){
 	m=nxi(),n=nxi();
@@ -95,7 +95,7 @@ int main(){
 	while(r-1e-4>l){
 		mid=(l+r)/2;
 		if(jdg(mid)) r=mid;
-		else l=mid+1;
+		else l=mid+1e-4;
 	}
 	printf("%lf\n",l);
 	return 0;
