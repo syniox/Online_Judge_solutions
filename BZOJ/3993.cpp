@@ -3,12 +3,13 @@
 #include<cstring>
 #include<cmath>
 using namespace std;
+typedef long long lint;
 const int N=55;
 int n,m,cnt,sum,at[N],hp[N],cur[N<<1],fir[N<<1],dep[N<<1];
 bool map[N][N];
 struct edge{
 	int to;
-	double wi;
+	lint wi;
 	int nx;
 }eg[5200];
 inline int nxi(){
@@ -18,13 +19,13 @@ inline int nxi(){
 	for(;c>='0'&&c<='9';c=getchar()) x=x*10+c-48;
 	return x;
 }
-inline void add(int a,int b,double v){
+inline void add(int a,int b,lint v){
 	eg[++cnt]=(edge){b,v,fir[a]};
 	fir[a]=cnt;
 	eg[++cnt]=(edge){a,0,fir[b]};
 	fir[b]=cnt;
 }
-void init(double t){
+void init(lint t){
 	cnt=0;
 	memset(fir,0,sizeof(fir));
 	for(int i=1;i<=n;++i){
@@ -50,7 +51,7 @@ bool bfs(){
 		int x=que[hd++];
 		for(int i=cur[x]=fir[x];i;i=eg[i].nx){
 			int y=eg[i].to;
-			if(!dep[y]){
+			if(!dep[y]&&eg[i].wi){
 				dep[y]=dep[x]+1;
 				que[tl++]=x;
 			}
@@ -58,12 +59,12 @@ bool bfs(){
 	}
 	return dep[(N<<1)-1];
 }
-double dfs(int x,double t){
+lint dfs(int x,lint t){
 	if(x==(N<<1)-1) return t;
-	double tp,tt=t;
+	lint tp,tt=t;
 	for(int &i=cur[x];i;i=eg[i].nx){
 		int y=eg[i].to;
-		double &v=eg[i].wi;
+		lint &v=eg[i].wi;
 		if(dep[y]==dep[x]+1&&v&&tt&&(tp=dfs(y,min(v,tt)))){
 			v-=tp;
 			eg[i^1].wi+=tp;
@@ -72,11 +73,11 @@ double dfs(int x,double t){
 	}
 	return tt-t;
 }
-inline bool jdg(double t){
-	double ans=0;
+inline bool jdg(int t){
+	lint ans=0;
 	init(t);
-	while(bfs()) ans+=dfs(0,50005);
-	return fabs(ans-sum)<1e-5;
+	while(bfs()) ans+=dfs(0,1e16);
+	return ans==sum;
 }
 int main(){
 	m=nxi(),n=nxi();
@@ -91,12 +92,12 @@ int main(){
 			map[i][j]=nxi();
 		}
 	}
-	double l=0,r=50001,mid;
-	while(r-1e-4>l){
-		mid=(l+r)/2;
+	int l=0,r=500000001,mid;
+	while(l<r){
+		mid=l+r>>1;
 		if(jdg(mid)) r=mid;
-		else l=mid+1e-4;
+		else l=mid+1;
 	}
-	printf("%lf\n",l);
+	printf("%lf\n",(double)l*0.0001);
 	return 0;
 }
