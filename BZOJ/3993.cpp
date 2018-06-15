@@ -5,8 +5,9 @@
 using namespace std;
 typedef long long lint;
 const int N=55;
-int n,m,cnt,sum,at[N],hp[N],cur[N<<1],fir[N<<1],dep[N<<1];
+int n,m,cnt,at[N],hp[N],cur[N<<1],fir[N<<1],dep[N<<1];
 bool map[N][N];
+lint sum;
 struct edge{
 	int to;
 	lint wi;
@@ -37,7 +38,7 @@ void init(lint t){
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
 			if(map[i][j]){
-				add(i,j+N,1000);
+				add(i,j+N,1e9);
 			}
 		}
 	}
@@ -53,7 +54,7 @@ bool bfs(){
 			int y=eg[i].to;
 			if(!dep[y]&&eg[i].wi){
 				dep[y]=dep[x]+1;
-				que[tl++]=x;
+				que[tl++]=y;
 			}
 		}
 	}
@@ -62,22 +63,22 @@ bool bfs(){
 lint dfs(int x,lint t){
 	if(x==(N<<1)-1) return t;
 	lint tp,tt=t;
-	for(int &i=cur[x];i;i=eg[i].nx){
+	for(int &i=cur[x];i&&tt;i=eg[i].nx){
 		int y=eg[i].to;
 		lint &v=eg[i].wi;
-		if(dep[y]==dep[x]+1&&v&&tt&&(tp=dfs(y,min(v,tt)))){
+		if(dep[y]==dep[x]+1&&v&&(tp=dfs(y,min(v,tt)))){
 			v-=tp;
 			eg[i^1].wi+=tp;
 			tt-=tp;
 		}
 	}
-	return tt-t;
+	return t-tt;
 }
 inline bool jdg(int t){
 	lint ans=0;
 	init(t);
 	while(bfs()) ans+=dfs(0,1e16);
-	return ans==sum;
+	return ans>=sum;
 }
 int main(){
 	m=nxi(),n=nxi();
@@ -85,14 +86,14 @@ int main(){
 		at[i]=nxi();
 	}
 	for(int i=1;i<=m;++i){
-		sum+=hp[i]=nxi();
+		sum+=hp[i]=nxi()*10000;
 	}
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
 			map[i][j]=nxi();
 		}
 	}
-	int l=0,r=500000001,mid;
+	int l=0,r=500000005,mid;
 	while(l<r){
 		mid=l+r>>1;
 		if(jdg(mid)) r=mid;
