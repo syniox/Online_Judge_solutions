@@ -1,7 +1,6 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
-#include<cmath>
 using namespace std;
 typedef long long lint;
 const int N=55;
@@ -27,7 +26,7 @@ inline void add(int a,int b,lint v){
 	fir[b]=cnt;
 }
 void init(lint t){
-	cnt=0;
+	cnt=1;
 	memset(fir,0,sizeof(fir));
 	for(int i=1;i<=n;++i){
 		add(0,i,at[i]*t);
@@ -82,11 +81,11 @@ inline bool jdg(int t){
 }
 int main(){
 	m=nxi(),n=nxi();
-	for(int i=1;i<=n;++i){
-		at[i]=nxi();
-	}
 	for(int i=1;i<=m;++i){
 		sum+=hp[i]=nxi()*10000;
+	}
+	for(int i=1;i<=n;++i){
+		at[i]=nxi();
 	}
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
