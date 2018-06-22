@@ -2,8 +2,7 @@
 #include<cstdio>
 #include<cstring>
 using namespace std;
-const int K=1e9;
-const int N=32000;
+const int N=45000;
 int T,mu[N],prm[N];
 bool npr[N];
 inline int nxi(){
@@ -35,7 +34,7 @@ int jdg(int t){
 	return ans;
 }
 int cal(int t){
-	int l=0,r=1e9+1,mid;
+	long long l=0,r=2e9+1,mid;
 	while(l!=r){
 		mid=l+r>>1;
 		if(jdg(mid)>=t) r=mid;
