@@ -70,8 +70,8 @@ void init(){
 			if((1<<j)&i) tp|=sp[j+1];
 		}
 		for(int j=1;j<=p;++j){
-			if(i&1<<(j-1)){
-				hx[i]=dp[j][tp];
+			if(i&(1<<(pt[j].bel-1))){
+				hx[i]=dp[pt[j].x][tp];
 				break;
 			}
 		}
