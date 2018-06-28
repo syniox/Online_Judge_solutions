@@ -18,7 +18,7 @@ inline void apn(int &a,int b){
 	if(a>b) a=b;
 }
 inline bool jdg(node x){
-	return x.x&&x.x<n&&x.y&&x.y<m;
+	return x.x&&x.x<=n&&x.y&&x.y<=m;
 }
 inline int pk(int x,int y,int t){
 	return (t<<8)+(x<<4)+y;
@@ -30,25 +30,26 @@ inline int nxi(){
 	int x=0;
 	char c;
 	while((c=getchar())>'9'||c<'0');
-	for(;c>='0'&&c<='9';c=getchar()) x=x*10-48+c;
+	while(x=x*10+c-48,(c=getchar())>='0'&&c<='9');
 	return x;
 }
 inline void init(int lt){
-	memset(vis,0,sizeof(vis));
+	memset(vis,1,sizeof(vis));
 	while(!que.empty()) que.pop();
 	int cnt=0;
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
 			if(!map[i][j]){
 				if((1<<(cnt))&lt){
-					if(dp[i][j][lt]>dp[i][j][lt^cnt]){
-						dp[i][j][lt]=dp[i][j][lt^cnt];
-						pre[i][j][lt]=pk(i,j,lt^cnt);
+					int q=lt^(1<<cnt);
+					if(dp[i][j][lt]>dp[i][j][q]){
+						dp[i][j][lt]=dp[i][j][q];
+						pre[i][j][lt]=pk(i,j,q);
 					}
-					que.push((node){i,j});
 				}
 				++cnt;
 			}
+			que.push((node){i,j});
 		}
 	}
 }
@@ -58,7 +59,7 @@ void spfa(int lt){
 		node tp,x=que.front();
 		que.pop();
 		int v=dp[x.x][x.y][lt];
-		vis[x.x][x.y]=0;
+		vis[x.x][x.y]=0；
 		for(int i=0;i<4;++i){
 			if(jdg(tp=x+cg[i])){
 				int &p=dp[tp.x][tp.y][lt];
@@ -75,15 +76,15 @@ void spfa(int lt){
 	}
 }
 void cal(){
-	memset(dp,31,sizeof(dp));
+	memset(dp,15,sizeof(dp));
 	for(int i=1;i<=n;++i){
-		for(int j=1;j<=n;++j) dp[i][j][0]=0;
+		for(int j=1;j<=m;++j) dp[i][j][0]=0;
 	}
 	for(int i=1;i<q;++i){
 		for(int j=1;j<=n;++j){
 			for(int k=1;k<=m;++k){
-				for(int l=(i-1)&i;l>(i^i);l=(l-1)&i){
-					int p=dp[j][k][i]+dp[j][k][i^l]-map[i][j];
+				for(int l=(i-1)&i;l;l=(l-1)&i){
+					int p=dp[j][k][l]+dp[j][k][i^l]-map[i][j];
 					if(dp[j][k][i]>p){
 						dp[j][k][i]=p;
 						pre[j][k][i]=pk(j,k,l);
@@ -116,7 +117,7 @@ void pt(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+	freopen("b.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<=n;++i){
