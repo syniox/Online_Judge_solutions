@@ -5,11 +5,11 @@
 using namespace std;
 const int N=1005;
 int n,m,p,cnt,que[N],fir[N],dp[N][1<<10];
-int sp[11],f[1<<10],hx[1<<10];
+int sp[11],hx[1<<10];
 bool vis[N],ipt[N];
 struct pnt{
 	int x,bel;
-	bool operator < (const pnt b){
+	bool operator < (const pnt b) const {
 		return x<b.x;
 	}
 }pt[11];
@@ -36,11 +36,12 @@ void spfa(int lt){
 		if(ipt[i]){
 			if(1<<cnt&lt){
 				apn(dp[i][lt],dp[i][lt^(1<<cnt)]);
-				que[tl++]=i;
 			}
 			++cnt;
 		}
+		que[tl++]=i;
 	}
+	memset(vis,1,sizeof(vis));
 	while(hd!=tl){
 		int x=que[hd++];
 		if(hd==N) hd=0;
@@ -64,26 +65,29 @@ void init(){
 		sp[pt[i].bel]+=1<<(i-1);
 	}
 	for(int i=1;i<1<<p;++i){
+		int tp=0;
+		for(int j=0;j<p;++j){
+			if((1<<j)&i) tp|=sp[j+1];
+		}
 		for(int j=1;j<=p;++j){
 			if(i&1<<(j-1)){
-				hx[i]=dp[j][(1<<p)-1];
+				hx[i]=dp[j][tp];
 				break;
 			}
 		}
 	}
 }
 int calc(){
-	memset(f,31,sizeof(f));
-	f[0]=0;
-	for(int i=1;i<=p;++i){
-		f[1<<(i-1)]=hx[sp[i]];
-	}
 	for(int i=1;i<1<<p;++i){
 		for(int j=(i-1)&i;j>((j-1)&j);j=(j-1)&i){
-			apn(f[i],f[j]+f[j^i]);
+			apn(hx[i],hx[j]+hx[j^i]);
 		}
 	}
-	return f[(1<<p)-1];
+	int ans=0;
+	for(int i=1;i<=p;++i){
+		if(sp[i]) ans|=sp[i];
+	}
+	return hx[ans];
 }
 
 //---------------main---------------//
@@ -99,9 +103,9 @@ int main(){
 		add(b,a,v);
 	}
 	for(int i=1;i<=p;++i){
+		pt[i].bel=nxi();
 		pt[i].x=nxi();
 		ipt[pt[i].x]=1;
-		pt[i].bel=nxi();
 	}
 	sort(pt+1,pt+p+1);
 	memset(dp,31,sizeof(dp));
@@ -109,7 +113,7 @@ int main(){
 	for(int i=1;i<1<<p;++i){
 		for(int j=1;j<=n;++j){
 			for(int k=(i-1)&i;k;k=(k-1)&i){
-				apn(dp[j][i],dp[j][k]+dp[j][k^i]);
+				apn(dp[j][i],dp[j][k]+dp[j][i^k]);
 			}
 		}
 		spfa(i);
