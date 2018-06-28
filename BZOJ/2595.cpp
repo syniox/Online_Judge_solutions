@@ -21,16 +21,16 @@ inline bool jdg(node x){
 	return x.x&&x.x<=n&&x.y&&x.y<=m;
 }
 inline int pk(int x,int y,int t){
-	return (t<<8)+(x<<4)+y;
+	return t<<8|x<<4|y;
 }
-inline void upk(int p,int &x,int &y,int &t){
+inline void upk(int &x,int &y,int &t,int p){
 	x=(p>>4)&15,y=p&15,t=p>>8;
 }
 inline int nxi(){
 	int x=0;
 	char c;
 	while((c=getchar())>'9'||c<'0');
-	while(x=x*10+c-48,(c=getchar())>='0'&&c<='9');
+	for(;c>='0'&&c<='9';c=getchar()) x=x*10+c-48;
 	return x;
 }
 inline void init(int lt){
@@ -40,7 +40,7 @@ inline void init(int lt){
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=m;++j){
 			if(!map[i][j]){
-				if((1<<(cnt))&lt){
+				if((1<<cnt)&lt){
 					int q=lt^(1<<cnt);
 					if(dp[i][j][lt]>dp[i][j][q]){
 						dp[i][j][lt]=dp[i][j][q];
@@ -59,7 +59,7 @@ void spfa(int lt){
 		node tp,x=que.front();
 		que.pop();
 		int v=dp[x.x][x.y][lt];
-		vis[x.x][x.y]=0；
+		vis[x.x][x.y]=0;
 		for(int i=0;i<4;++i){
 			if(jdg(tp=x+cg[i])){
 				int &p=dp[tp.x][tp.y][lt];
@@ -84,7 +84,7 @@ void cal(){
 		for(int j=1;j<=n;++j){
 			for(int k=1;k<=m;++k){
 				for(int l=(i-1)&i;l;l=(l-1)&i){
-					int p=dp[j][k][l]+dp[j][k][i^l]-map[i][j];
+					int p=dp[j][k][l]+dp[j][k][i^l]-map[j][k];
 					if(dp[j][k][i]>p){
 						dp[j][k][i]=p;
 						pre[j][k][i]=pk(j,k,l);
@@ -96,11 +96,12 @@ void cal(){
 	}
 }
 void dfs(int x,int y,int t){
+	vis[x][y]=1;
 	if(!pre[x][y][t]) return;
 	int tx,ty,tt;
 	upk(tx,ty,tt,pre[x][y][t]);
 	dfs(tx,ty,tt);
-	if(x==tx&&y==ty) dfs(x,y,t^tt);
+	if(x==tx&&y==ty&&tt&&tt!=t) dfs(x,y,t^tt);
 }
 void pt(){
 	for(int i=1;i<=n;++i){
@@ -133,10 +134,10 @@ int main(){
 			if(!map[i][j]){
 				printf("%d\n",dp[i][j][q-1]);
 				dfs(i,j,q-1);
-				break;
+				pt();
+				return 0;
 			}
 		}
 	}
-	pt();
 	return 0;
 }
