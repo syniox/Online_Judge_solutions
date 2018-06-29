@@ -21,6 +21,7 @@ inline void add(int a,int b,int v){
 }
 bool spfa(){
 	memset(dis,-5,sizeof(dis));
+	memset(vis,0,sizeof(vis));
 	int hd=0,tl=1;
 	que[0]=1;
 	dis[1]=0;
@@ -47,7 +48,6 @@ bool jdg(int t){
 	cnt=0;
 	memset(fir,0,sizeof(fir));
 	memset(cvs,0,sizeof(cvs));
-	cvs[1]=1;
 	for(int x=1;x<=n;++x){
 		for(int i=fi[x];i;i=og[i].nx){
 			int y=og[i].to,v=og[i].wi;
