@@ -84,7 +84,7 @@ int main(){
 	n=nxi();
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=n;++j){
-			v[i][j]=nxi()*10000000ll;
+			v[i][j]=nxi()*100000000ll;
 		}
 	}
 	for(int i=1;i<=n;++i){
@@ -92,12 +92,12 @@ int main(){
 			w[i][j]=nxi();
 		}
 	}
-	lint l=0,r=1e11,mid;
+	lint l=0,r=1e12,mid;
 	while(l<r){
 		mid=(l+r+1)>>1;
 		if(jdg(mid)) l=mid;
 		else r=mid-1;
 	}
-	printf("%.6lf\n",double(l)*0.0000001);
+	printf("%.6lf\n",double(l)*0.00000001);
 	return 0;
 }
