@@ -28,6 +28,7 @@ bool spfa(){
 	memset(dis,-2,sizeof(dis));
 	int hd=0,tl=1;
 	dis[0]=0;
+	que[0]=0;
 	while(hd!=tl){
 		int x=que[hd++];
 		vis[x]=0;
@@ -46,10 +47,11 @@ bool spfa(){
 			}
 		}
 	}
-	return dis[(N<<1)-1]>-1e15;
+	return dis[(N<<1)-1]>-1e16;
 }
 bool jdg(lint t){
 	cnt=1;
+	memset(fir,0,sizeof(fir));
 	for(int i=1;i<=n;++i){
 		add(0,i,1,0);
 		add(i+N,(N<<1)-1,1,0);
@@ -60,15 +62,18 @@ bool jdg(lint t){
 		}
 	}
 	lint ans=0;
-	while(spfa()){
-		int x=(N<<1)-1;
-		while(x){
-			int q=pre[x];
-			--eg[q].wi;
-			++eg[q^1].wi;
-			ans+=eg[q].cs;
-			x=eg[q].fr;
-		}
+	if(!spfa()) return 0;
+	if(spfa()){
+		do{
+			int x=(N<<1)-1;
+			while(x){
+				int q=pre[x];
+				--eg[q].wi;
+				++eg[q^1].wi;
+				ans+=eg[q].cs;
+				x=eg[q].fr;
+			}
+		}while(spfa());
 	}
 	return ans>=0;
 }
@@ -87,12 +92,12 @@ int main(){
 			w[i][j]=nxi();
 		}
 	}
-	lint l=0,r=1e16,mid;
+	lint l=0,r=1e11,mid;
 	while(l<r){
-		mid=(l+r)>>1;
-		if(jdg(mid)) r=mid;
-		else l=mid+1;
+		mid=(l+r+1)>>1;
+		if(jdg(mid)) l=mid;
+		else r=mid-1;
 	}
-	printf("%.6lf\n",double(l+5)*0.0000001);
+	printf("%.6lf\n",double(l)*0.0000001);
 	return 0;
 }
