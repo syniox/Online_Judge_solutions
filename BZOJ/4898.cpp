@@ -54,7 +54,7 @@ inline void get_v(){
 			if(i==j) continue;
 			for(int k=1;k<=p;++k){
 				if((~ot[j][k])&&(~in[i][k])){
-					apx(vl[i][j],(ot[j][k]-in[i][k])*100ll);
+					apx(vl[i][j],(lint)(ot[j][k]-in[i][k])*10ll);
 				}
 			}
 		}
@@ -74,7 +74,7 @@ bool spfa(){
 		for(int i=fir[x];i;i=eg[i].nx){
 			int y=eg[i].to;
 			lint v=eg[i].wi+dis[x];
-			if(dis[y]<v){
+			if(dis[y]<=v){
 				dis[y]=v;
 				if(!vis[y]){
 					if(++cvs[y]==n) return 1;
@@ -100,14 +100,13 @@ inline bool jdg(lint t){
 }
 
 int sol(){
-	lint l=0,r=1e11,mid;
+	lint l=0,r=1e10,mid;
 	while(l!=r){
-		mid=(l+r)>>1;
-		//true:not the smallest!!
-		if(jdg(mid)) l=mid+1;
-		else r=mid;
+		mid=(l+r+1)>>1;
+		if(jdg(mid)) l=mid;
+		else r=mid-1;
 	}
-	return l/100;
+	return l/10;
 }
 
 int main(){
