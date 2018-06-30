@@ -14,7 +14,7 @@ struct edge{
 	lint wi;
 }eg[20002];
 
-template<class T> void apn(T &a,T b){
+template <class T> void apn(T &a,T b){
 	if(a>b) a=b;
 }
 
@@ -23,7 +23,6 @@ template <class T> void apx(T &a,T b){
 }
 
 inline void add(int a,int b,lint v){
-	printf("add:%d %d %lld\n",a,b,v);
 	eg[++cnt]=(edge){b,fir[a],v};
 	fir[a]=cnt;
 }
@@ -54,7 +53,7 @@ inline void get_v(){
 		for(int j=1;j<=n;++j){
 			if(i==j) continue;
 			for(int k=1;k<=p;++k){
-				if(~ot[j][k]&&~in[i][k]){
+				if((~ot[j][k])&&(~in[i][k])){
 					apx(vl[i][j],(ot[j][k]-in[i][k])*100ll);
 				}
 			}
@@ -63,7 +62,7 @@ inline void get_v(){
 }
 
 bool spfa(){
-	memset(vis,0,sizeof(vis));
+	memset(vis,1,sizeof(vis));
 	memset(dis,0,sizeof(dis));
 	memset(cvs,0,sizeof(cvs));
 	int hd=0,tl=0;
@@ -94,7 +93,7 @@ inline bool jdg(lint t){
 	cnt=0;
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=n;++j){
-			if(map[i][j]<5e8) add(i,j,vl[i][j]-t*map[i][j]);
+			if(map[i][j]<=1e9) add(i,j,vl[i][j]-t*map[i][j]);
 		}
 	}
 	return spfa();
@@ -103,20 +102,20 @@ inline bool jdg(lint t){
 int sol(){
 	lint l=0,r=1e11,mid;
 	while(l!=r){
-		mid=(l+r+1)>>1;
-		if(jdg(mid)) l=mid;
-		else r=mid-1;
+		mid=(l+r)>>1;
+		//true:not the smallest!!
+		if(jdg(mid)) l=mid+1;
+		else r=mid;
 	}
 	return l/100;
 }
 
 int main(){
-	memset(map,31,sizeof(map));
+	memset(map,60,sizeof(map));
 	n=nxi(),m=nxi(),p=nxi();
-	for(int i=1;i<=n;++i) map[i][i]=0;
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=p;++j){
-			in[i][j]=nxi(),ot[i][j]=nxi();
+			scanf("%d%d",&in[i][j],&ot[i][j]);
 		}
 	}
 	for(int a,b,v,i=1;i<=m;++i){
