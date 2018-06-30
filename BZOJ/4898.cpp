@@ -18,11 +18,12 @@ template<class T> void apn(T &a,T b){
 	if(a>b) a=b;
 }
 
-inline bool vd(int x){
-	return x>0&&x<=1000000000;
+template <class T> void apx(T &a,T b){
+	if(a<b) a=b;
 }
 
-inline void add(int a,int b,int v){
+inline void add(int a,int b,lint v){
+	printf("add:%d %d %lld\n",a,b,v);
 	eg[++cnt]=(edge){b,fir[a],v};
 	fir[a]=cnt;
 }
@@ -49,12 +50,12 @@ inline void floyd(){
 }
 
 inline void get_v(){
-	memset(vl,-5,sizeof(vl));
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=n;++j){
+			if(i==j) continue;
 			for(int k=1;k<=p;++k){
-				if(vd(ot[j][k])&&vd(in[i][k])){
-					apn(vl[i][j],(lint)(ot[j][k]-in[i][k])*100ll);
+				if(~ot[j][k]&&~in[i][k]){
+					apx(vl[i][j],(ot[j][k]-in[i][k])*100ll);
 				}
 			}
 		}
@@ -64,7 +65,9 @@ inline void get_v(){
 bool spfa(){
 	memset(vis,0,sizeof(vis));
 	memset(dis,0,sizeof(dis));
-	int hd=0,tl=1;
+	memset(cvs,0,sizeof(cvs));
+	int hd=0,tl=0;
+	for(;tl<n;++tl) que[tl]=tl+1;
 	while(hd!=tl){
 		int x=que[hd];
 		if(++hd==N) hd=0;
@@ -91,14 +94,14 @@ inline bool jdg(lint t){
 	cnt=0;
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=n;++j){
-			if(map[i][j]<5e8&&vl[i][j]>-1e6) add(i,j,vl[i][j]-t*map[i][j]);
+			if(map[i][j]<5e8) add(i,j,vl[i][j]-t*map[i][j]);
 		}
 	}
 	return spfa();
 }
 
 int sol(){
-	lint l=0,r=1e12,mid;
+	lint l=0,r=1e11,mid;
 	while(l!=r){
 		mid=(l+r+1)>>1;
 		if(jdg(mid)) l=mid;
@@ -110,6 +113,7 @@ int sol(){
 int main(){
 	memset(map,31,sizeof(map));
 	n=nxi(),m=nxi(),p=nxi();
+	for(int i=1;i<=n;++i) map[i][i]=0;
 	for(int i=1;i<=n;++i){
 		for(int j=1;j<=p;++j){
 			in[i][j]=nxi(),ot[i][j]=nxi();
