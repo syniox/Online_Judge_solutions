@@ -2,10 +2,10 @@
 #include<cstdio>
 #include<cstring>
 using namespace std;
-typedef long long lint;
+typedef unsigned long long lint;
 const lint mod=1e9+7;
-int bit,mx[65];
-lint dp[65][2];
+int bit,mx[70];
+lint dp[70][2][2];
 struct mtrx{
 	lint a,b,c,d;
 	mtrx operator * (const mtrx y) const{
@@ -37,23 +37,23 @@ mtrx qmi(mtrx x,lint t){
 	return q;
 }
 
-lint dfs(int w,int t,bool f){
-	if(w==2) return !f||mx[1]||mx[2]; 
-	if(dp[w][t]&&!f) return dp[w][t];
-	if(!f) return (dp[w-1][0]=dfs(w-1,0,0))+(dp[w-1][1]=dfs(w-1,1,0));
+//y:have 1 before?
+lint dfs(int w,bool t,bool y,bool f){
+	if(w==2) return (!t&&(!f||mx[1]))+y;
+	if(dp[w][t][y]&&!f) return dp[w][t][y];
+	if(!f) return (dp[w-1][0][y]=dfs(w-1,0,y,0))+(t?0:dp[w-1][1][1]=dfs(w-1,1,1,0));
 	lint ans=0;
-	if(mx[w-1]&&!t) ans+=dfs(w-1,1,1);
-	return ans+dfs(w-1,0,f&&mx[w-1]==0);
+	if((!f||mx[w-1])&&!t) ans+=dfs(w-1,1,1,1);
+	return ans+dfs(w-1,0,y,f&&mx[w-1]==0);
 }
 
 int main(){
 	mtrx r=(mtrx){0,1,1,1};
 	lint n,T=nxi();
-	dp[1][1]=dp[2][0]=dp[2][1]=1;
 	while(T--){
 		n=nxi();
 		init(n);
-		printf("%lld\n",dfs(bit+1,0,1));
+		printf("%lld\n",dfs(bit+1,0,0,1));
 		printf("%lld\n",qmi(r,n).d+1);
 	}
 	return 0;
