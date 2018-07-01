@@ -8,7 +8,7 @@ int fir[N],cur[N],que[N],dep[N];
 bool ps[N];
 struct edge{
 	int to,wi,nx;
-}eg[190000];
+}eg[361805];
 
 inline void add(int a,int b,int v){
 	eg[++cnt]=(edge){b,v,fir[a]};
