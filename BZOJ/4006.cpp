@@ -85,7 +85,7 @@ int calc(){
 	}
 	int ans=0;
 	for(int i=1;i<=p;++i){
-		if(sp[i]) ans|=sp[i];
+		if(sp[i]) ans|=1<<(i-1);
 	}
 	return hx[ans];
 }
@@ -109,7 +109,7 @@ int main(){
 	}
 	sort(pt+1,pt+p+1);
 	memset(dp,31,sizeof(dp));
-	for(int i=1;i<1<<p;++i) dp[i][0]=0;
+	for(int i=1;i<=n;++i) dp[i][0]=0;
 	for(int i=1;i<1<<p;++i){
 		for(int j=1;j<=n;++j){
 			for(int k=(i-1)&i;k;k=(k-1)&i){
