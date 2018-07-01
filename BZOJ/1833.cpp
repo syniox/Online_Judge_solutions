@@ -6,6 +6,7 @@ typedef long long lint;
 const int N=14;
 int mx[N];
 lint t[N];
+bool vis[N][10];
 struct data{
 	lint a[10];
 	data operator + (const data b) const {
@@ -34,6 +35,7 @@ inline void init(){
 
 //y: 1 exist? l->limit
 data dfs(int w,int x,bool y,bool l){
+	if(vis[w][x]&&y&&!l) return dp[w][x];
 	data ans;
 	for(int i=0;i<10;++i) ans.a[i]=0;
 	if(w==1) return ans;
@@ -42,9 +44,17 @@ data dfs(int w,int x,bool y,bool l){
 		ans=ans+dfs(w-1,i,i||y,l&&i==top);
 	}
 	for(int i=1-y;i<top;++i){
-		ans.a[i]+=t[i-1];
+		ans.a[i]+=t[w-2];
 	}
-	return dp[w][x]=ans;
+	if(l){
+		int tp=0;
+		for(int i=w-2;i;--i){
+			tp=tp*10+mx[i];
+		}
+		ans.a[top]+=tp;
+	}
+	if(y&&!l) dp[w][x]=ans,vis[w][x]=1;
+	return ans;
 }
 
 inline data cal(lint x){
