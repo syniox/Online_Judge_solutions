@@ -2,7 +2,7 @@
 #include<cstdio>
 #include<cstring>
 using namespace std;
-typedef unsigned long long lint;
+typedef long long lint;
 const lint mod=1e9+7;
 int bit,mx[70];
 lint dp[70][2][2];
@@ -13,7 +13,7 @@ struct mtrx{
 	}
 };
 
-inline int nxi(){
+inline lint nxi(){
 	lint x=0;
 	char c;
 	while((c=getchar())>'9'||c<'0');
@@ -41,20 +41,21 @@ mtrx qmi(mtrx x,lint t){
 lint dfs(int w,bool t,bool y,bool f){
 	if(w==2) return (!t&&(!f||mx[1]))+y;
 	if(dp[w][t][y]&&!f) return dp[w][t][y];
-	if(!f) return (dp[w-1][0][y]=dfs(w-1,0,y,0))+(t?0:dp[w-1][1][1]=dfs(w-1,1,1,0));
+	if(!f) return dp[w][t][y]=dfs(w-1,0,y,0)+(t?0:dfs(w-1,1,1,0));
 	lint ans=0;
-	if((!f||mx[w-1])&&!t) ans+=dfs(w-1,1,1,1);
-	return ans+dfs(w-1,0,y,f&&mx[w-1]==0);
+	if(mx[w-1]&&!t) ans+=dfs(w-1,1,1,1);
+	return ans+dfs(w-1,0,y,f&&!mx[w-1]);
 }
 
 int main(){
 	mtrx r=(mtrx){0,1,1,1};
-	lint n,T=nxi();
+	lint n,T;
+	T=nxi();
 	while(T--){
 		n=nxi();
 		init(n);
 		printf("%lld\n",dfs(bit+1,0,0,1));
-		printf("%lld\n",qmi(r,n).d+1);
+		printf("%lld\n",qmi(r,n+1).d);
 	}
 	return 0;
 }
