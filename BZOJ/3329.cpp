@@ -54,6 +54,10 @@ int main(){
 	while(T--){
 		n=nxi();
 		init(n);
+		if(!n){
+			puts("0\n1");
+			continue;
+		}
 		printf("%lld\n",dfs(bit+1,0,0,1));
 		printf("%lld\n",qmi(r,n+1).d);
 	}
