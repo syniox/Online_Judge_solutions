@@ -46,12 +46,13 @@ data dfs(int w,int x,bool y,bool l){
 	for(int i=1-y;i<top;++i){
 		ans.a[i]+=t[w-2];
 	}
-	if(l){
-		int tp=0;
+	if(!l) ans.a[top]+=t[w-2];
+	else {
+		lint tp=0;
 		for(int i=w-2;i;--i){
 			tp=tp*10+mx[i];
 		}
-		ans.a[top]+=tp;
+		ans.a[top]+=tp+(y||top);//Be careful with zero
 	}
 	if(y&&!l) dp[w][x]=ans,vis[w][x]=1;
 	return ans;
