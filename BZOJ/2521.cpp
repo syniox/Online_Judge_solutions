@@ -3,16 +3,16 @@
 #include<cstring>
 using namespace std;
 const int N=502;
-int n,m,lb,fr,to,fw,cnt,fir[N],cur[N],que[N],dep[N],map[N][N];
+int n,m,lb,fr,to,fw,cnt,fi[N],fir[N],cur[N],que[N],dep[N],map[N][N];
  
 struct edge{
     int to,wi,nx;
-}eg[1605];
+}eg[1600],gg[1605];
  
 inline void add(int a,int b,int v){
     eg[++cnt]=(edge){b,v,fir[a]};
     fir[a]=cnt;
-    eg[++cnt]=(edge){a,b,fir[b]};
+    eg[++cnt]=(edge){a,v,fir[b]};
     fir[b]=cnt;
 }
  
@@ -58,18 +58,20 @@ int dfs(int x,int t){
 }
  
 int main(){
-    cnt=1;
+    cnt=0;
     memset(map,31,sizeof(map));
     n=nxi(),m=nxi(),lb=nxi();
     for(int a,b,c,i=1;i<=m;++i){
         a=nxi(),b=nxi(),c=nxi();
-        map[a][b]=map[b][a]=c;
+        gg[++cnt]=(edge){b,c,fi[a]};
+        fi[a]=cnt;
         if(i==lb) fr=a,to=b,fw=c;
     }
     if(fr>to) swap(fr,to);
-    for(int i=1;i<n;++i){
-        for(int j=i+1;j<=n;++j){
-            if((i!=fr||j!=to)&&map[i][j]<=fw) add(i,j,fw-map[i][j]+1);
+    cnt=1;
+    for(int x=1;x<=n;++x){
+        for(int i=fi[x];i;i=gg[i].nx){
+            if(gg[i].wi<=fw&&i!=lb) add(x,gg[i].to,fw-gg[i].wi+1);
         }
     }
     int ans(0);
