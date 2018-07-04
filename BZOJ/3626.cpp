@@ -5,14 +5,15 @@
 using namespace std;
 typedef long long lint;
 const int N=50002;
-int n,q,cnt,fz[N],fa[N],fir[N],ans[N];
-int sz[N],top[N],son[N],dep[N],dfn[N];
+int n,q,cnt,fz[N],fa[N],fir[N];
+int sz[N],top[N],son[N],dfn[N];
+lint ans[N];
 struct edge{
 	int to,nx;
 }eg[N];
 struct node{
 	int l,r,s,f;
-}tr[N*3];
+}tr[N<<2];
 struct qry{
 	int r,id;
 	bool z;
@@ -37,7 +38,7 @@ inline void p_ad(int k,int f){
 
 inline void psh(int k){
 	int &f=tr[k].f;
-	if(f){
+	if(f&&tr[k].l!=tr[k].r){
 		p_ad(k<<1,f);
 		p_ad(k<<1|1,f);
 		f=0;
@@ -56,11 +57,10 @@ void dfs1(int x){
 	sz[x]=1;
 	for(int i=fir[x];i;i=eg[i].nx){
 		int y=eg[i].to;
-		if(!dep[y]){
-			dep[y]=dep[x]+1;
+		if(fa[x]!=y){
 			dfs1(y);
-			sz[x]+=sz[y];
 			if(sz[son[x]]<sz[y]) son[x]=y;
+			sz[x]+=sz[y];
 		}
 	}
 }
@@ -76,7 +76,7 @@ void dfs2(int x){
 }
 
 void build(int k,int l,int r){
-	tr[k]=(node){l,r,0};
+	tr[k]=(node){l,r,0,0};
 	if(l==r) return;
 	int mid=(l+r)>>1;
 	build(k<<1,l,mid);
@@ -102,39 +102,31 @@ lint ask(int k,int x,int y){
 	if(l>=x&&r<=y) return tr[k].s;
 	if(y<=mid) return ask(k<<1,x,y);
 	if(x>mid) return ask(k<<1|1,x,y);
-	return ask(k<<1,x,y),ask(k<<1|1,x,y);
+	return ask(k<<1,x,y)+ask(k<<1|1,x,y);//
 }
 
 inline void mod_t(int x){
-	while(top[x]!=1){
+	while(x){
 		mod(1,dfn[top[x]],dfn[x]);
 		x=fa[top[x]];
 	}
-	mod(1,1,dfn[x]);
 }
 
 inline lint ask_t(int x){
 	lint ans(0);
-	while(top[x]!=1){
+	while(x){
 		ans+=ask(1,dfn[top[x]],dfn[x]);
 		x=fa[top[x]];
 	}
-	return ans+ask(1,1,x);;
+	return ans;
 }
-
 int main(){
-#ifndef ONLINE_JUDGE
-	freopen("3.in","r",stdin);
-	freopen("c.out","w",stdout);
-#endif
 	n=nxi(),q=nxi();
 	for(int a,i=2;i<=n;++i){
 		a=nxi()+1;
 		fa[i]=a;
 		add(a,i);
-		add(i,a);
 	}
-	dep[1]=1;
 	dfs1(1);
 	cnt=0;
 	dfs2(1);
@@ -146,7 +138,6 @@ int main(){
 		if(l-1) qy[++cnt]=(qry){l-1,i,0};
 	}
 	sort(qy+1,qy+cnt+1);
-	puts("sort done");
 	build(1,1,n);
 	for(int i=1,j=1;i<=n;++i){
 		mod_t(i);
@@ -156,7 +147,7 @@ int main(){
 		}
 	}
 	for(int i=1;i<=q;++i){
-		printf("%d\n",ans[i]%201314);
+		printf("%lld\n",ans[i]%201314);
 	}
 	return 0;
 }
