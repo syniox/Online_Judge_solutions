@@ -40,7 +40,7 @@ int main(){
 		xz[i].x=nxi(),xz[i].t=nxi();
 	}
 	sort(xz+1,xz+k+1);
-	lint ans=1,dy=n*(n+1)%ha*qmi(2,1e9+5)%ha;
+	lint ans=1,dy=(lint)n*(n+1)%ha*qmi(2,1e9+5)%ha;
 	for(int j=0,i=1;i<=k;){
 		ans=ans*qmi(dy,xz[i].x-j-1)%ha;
 		lint tp=0;
@@ -49,8 +49,9 @@ int main(){
 			if(xz[i]==xz[i++]) continue;
 			tp+=xz[i-1].t;
 		}
+		tp%=ha;
 		j=xz[i-1].x;
-		ans=ans*(dy-tp)%ha;
+		ans=ans*(dy-tp<0?dy-tp+ha:dy-tp)%ha;
 	}
 	ans=ans*qmi(dy,m-xz[k].x)%ha;
 	printf("%lld\n",ans);
