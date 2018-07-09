@@ -5,7 +5,7 @@
 using namespace std;
 typedef long long lint;
 const int N=200005;
-const int ha=19260817;
+const int ha=233333;
 const int mod=1e9+7;
 int n,ans,tl,tk,xl[N],vc[N],que[N];
 lint hx[N],xh[N],qh[N];
