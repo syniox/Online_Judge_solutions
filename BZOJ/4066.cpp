@@ -3,10 +3,10 @@
 #include<algorithm>
 #include<cstring>
 using namespace std;
-const int N=5e5+5;
+const int N=2e5+5;
 int n,rt,las,cnt;
 struct node{
-	int s,c[2],p[2],mn[2],mx[2];
+	int s,x,c[2],p[2],mn[2],mx[2];
 }now,pr[N],tr[N];
 
 inline bool cp(node a,node b,bool f){
@@ -18,6 +18,13 @@ inline bool cpx(node a,node b){
 inline bool cpy(node a,node b){
 	return a.p[1]<b.p[1];
 }
+inline void apn(int &a,int b){
+	if(a>b) a=b;
+}
+inline void apx(int &a,int b){
+	if(a<b) a=b;
+}
+
 
 inline int nxi(){
 	int x=0;
@@ -38,11 +45,12 @@ inline bool dlv(int k,int a,int b,int x,int y){
 }
 
 inline void upd(int k){
-	node &p=tr[k];
-	p.s=tr[p.c[0]].s+tr[p.c[1]].s;
+	node &p=tr[k],&l=tr[p.c[0]],&r=tr[p.c[1]];
+	p.s=p.x+l.s+r.s;
 	for(int i=0;i<2;++i){
-		p.mn[i]=min(tr[p.c[0]].mn[i],tr[p.c[1]].mn[i]);
-		p.mx[i]=max(tr[p.c[0]].mx[i],tr[p.c[1]].mx[i]);
+		p.mn[i]=p.mx[i]=p.p[i];
+		apn(p.mn[i],l.mn[i]),apn(p.mn[i],r.mn[i]);
+		apx(p.mx[i],l.mx[i]),apn(p.mx[i],r.mx[i]);
 	}
 }
 
@@ -72,10 +80,11 @@ int build(int l,int r,bool f){
 }
 
 int ask(int k,int a,int b,int x,int y){
-	if(vld(k,a,b,x,y)) return tr[k].s;
-	int ans(0);
-	if(!dlv(tr[k].c[0],a,b,x,y)) ans+=ask(tr[k].c[0],a,b,x,y); 
-	if(!dlv(tr[k].c[1],a,b,x,y)) ans+=ask(tr[k].c[1],a,b,x,y); 
+	node &p=tr[k];
+	if(vld(k,a,b,x,y)) return p.s;
+	int ans=(p.p[0]>=a&&p.p[1]>=b&&p.p[0]<=x&&p.p[1]<=y)*p.x;
+	if(!dlv(p.c[0],a,b,x,y)) ans+=ask(p.c[0],a,b,x,y);
+	if(!dlv(p.c[1],a,b,x,y)) ans+=ask(p.c[1],a,b,x,y);
 	return ans;
 }
 
@@ -88,7 +97,8 @@ int main(){
 	int a,b,x,y,ct(0),op;
 	while((op=nxi())!=3){
 		if(op==1){
-			now.p[0]=nxi()^las,now.p[1]=nxi()^las,now.s=nxi()^las;
+			now.p[0]=nxi()^las,now.p[1]=nxi()^las;
+			now.x=now.s=nxi()^las;
 			ins(rt,0);
 			if(++ct==10000){
 				memcpy(pr,tr,sizeof(node)*cnt+1);
@@ -97,7 +107,7 @@ int main(){
 			}
 		}
 		else{
-			a=nxi()^las,x=nxi()^las,b=nxi()^las,y=nxi()^las;
+			a=nxi()^las,b=nxi()^las,x=nxi()^las,y=nxi()^las;
 			printf("%d\n",las=ask(rt,a,b,x,y));
 		}
 	}
