@@ -50,7 +50,7 @@ inline void upd(int k){
 	for(int i=0;i<2;++i){
 		p.mn[i]=p.mx[i]=p.p[i];
 		apn(p.mn[i],l.mn[i]),apn(p.mn[i],r.mn[i]);
-		apx(p.mx[i],l.mx[i]),apn(p.mx[i],r.mx[i]);
+		apx(p.mx[i],l.mx[i]),apx(p.mx[i],r.mx[i]);
 	}
 }
 
@@ -81,6 +81,8 @@ int build(int l,int r,bool f){
 
 int ask(int k,int a,int b,int x,int y){
 	node &p=tr[k];
+//	printf("k%d a%d b%d x%d y%d b%d\n",k,a,b,x,y,vld(k,a,b,x,y));
+//	printf("p%d %dmin%d %d max%d %d\n",p.p[0],p.p[1],p.mn[0],p.mn[1],p.mx[0],p.mx[1]);
 	if(vld(k,a,b,x,y)) return p.s;
 	int ans=(p.p[0]>=a&&p.p[1]>=b&&p.p[0]<=x&&p.p[1]<=y)*p.x;
 	if(!dlv(p.c[0],a,b,x,y)) ans+=ask(p.c[0],a,b,x,y);
@@ -101,10 +103,11 @@ int main(){
 			now.x=now.s=nxi()^las;
 			ins(rt,0);
 			if(++ct==10000){
-				memcpy(pr,tr,sizeof(node)*cnt+1);
+				memcpy(pr,tr,sizeof(node)*(cnt+1));
 				rt=build(1,cnt,0);
 				ct=0;
 			}
+//			printf("s%d\n",tr[rt].s);
 		}
 		else{
 			a=nxi()^las,b=nxi()^las,x=nxi()^las,y=nxi()^las;
