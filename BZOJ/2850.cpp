@@ -6,8 +6,8 @@
 using namespace std;
 typedef long long lint;
 const int N=5e4+5;
-int n,m,rt,ka,kb,kc;
-lint ans;
+int n,m,rt;
+lint ka,kb,kc,ans;
 struct node{
 	int x,p[2],c[2],mn[2],mx[2];
 	lint s;
@@ -51,7 +51,7 @@ inline void upd(int k){
 }
 
 inline int jdg(int x,int y){
-	return (lint)ka*x+(lint)kb*y<kc;
+	return ka*x+kb*y<kc;
 }
 
 inline int vld(node &x){
@@ -72,9 +72,7 @@ int build(int l,int r,bool f){
 	return mid;
 }
 
-int ndcnt=0;
 void ask(int k){
-	++ndcnt;
 	if(jdg(tr[k].p[0],tr[k].p[1])) ans+=tr[k].x;
 	int l=tr[k].c[0],r=tr[k].c[1];
 	if(l){
@@ -90,12 +88,8 @@ void ask(int k){
 }
 
 int main(){
-#ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
-	freopen("a.out","w",stdout);
-#endif
 	tr[0].mn[0]=tr[0].mn[1]=1e9;
-//	int t=clock();
+	tr[0].mx[0]=tr[0].mx[1]=-1e9;
 	n=nxi(),m=nxi();
 	for(int i=1;i<=n;++i){
 		node &p=tr[i];
@@ -104,19 +98,12 @@ int main(){
 		p.x=p.s=nxi();
 	}
 	rt=build(1,n,0);
-//	printf("***%d\n",clock()-t);
-	for(int i=1;i<=n;++i){
-		node &p=tr[i];
-		printf("l%d r%d %d %d %d %d %d %d\n",p.c[0],p.c[1],p.p[0],p.p[1],p.mn[0],p.mn[1],p.mx[0],p.mx[1]);
-	}
 	while(m--){
-		//      scanf("%d%d%d",&ka,&kb,&kc);
 		ka=nxi(),kb=nxi(),kc=nxi();
 		ans=0;
 		ask(rt);
 		prt(ans);
 		putchar('\n');
 	}
-	cerr<<"ndcnt="<<ndcnt<<endl;
 	return 0;
 }
