@@ -11,16 +11,16 @@ struct node{
 	lint s;
 }tr[N];
 
-inline bool cpy(node a,node b){
+inline bool cpy(const node &a,const node &b){
 	return a.p[1]<b.p[1];
 }
-inline bool cpx(node a,node b){
+inline bool cpx(const node &a,const node &b){
 	return a.p[0]<b.p[0];
 }
-inline void apn(int &a,int b){
+inline void apn(int &a,const int b){
 	if(a>b) a=b;
 }
-inline void apx(int &a,int b){
+inline void apx(int &a,const int b){
 	if(a<b) a=b;
 }
 
@@ -45,10 +45,10 @@ inline void upd(int k){
 
 int vld(node &x){
 	int ans=0;
-	ans+=(ka*x.mn[0]+ka*x.mn[1]<kc);
-	ans+=(ka*x.mn[0]+ka*x.mx[1]<kc);
-	ans+=(ka*x.mx[0]+ka*x.mn[1]<kc);
-	ans+=(ka*x.mx[0]+ka*x.mx[1]<kc);
+	ans+=(ka*x.mn[0]+kb*x.mn[1]<kc);
+	ans+=(ka*x.mn[0]+kb*x.mx[1]<kc);
+	ans+=(ka*x.mx[0]+kb*x.mn[1]<kc);
+	ans+=(ka*x.mx[0]+kb*x.mx[1]<kc);
 	return ans;
 }
 
@@ -68,11 +68,7 @@ lint ask(int k){
 	int q=vld(p);
 	if(!q) return 0;
 	if(q==4) return p.s;
-	lint ans=(ka*p.p[0]+kb*p.p[1]<kc)*p.x;
-	int l=p.c[0],r=p.c[1];
-	if(vld(tr[l].mn[0],tr[l].mn[1])) ans+=ask(l);
-	if(vld(tr[r].mn[0],tr[r].mn[1])) ans+=ask(r);
-	return ans;
+	return (ka*p.p[0]+kb*p.p[1]<kc)*p.x+ask(p.c[0])+ask(p.c[1]);
 }
 
 int main(){
@@ -83,7 +79,7 @@ int main(){
 	n=nxi(),m=nxi();
 	for(int i=1;i<=n;++i){
 		node &p=tr[i];
-		scanf("%d%d",p.p[0],p.p[1]);
+		scanf("%d%d",&p.p[0],&p.p[1]);
 		p.mn[0]=p.mx[0]=p.p[0];
 		p.mn[1]=p.mx[1]=p.p[1];
 		p.x=p.s=nxi();
