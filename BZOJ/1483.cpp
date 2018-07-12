@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
+#include<cassert>
 using namespace std;
 const int N=1e5+5;
 int n,m,cnt,ans,fir[N*10];
@@ -20,6 +21,17 @@ inline int nxi(){
 	while(x=x*10+c-48,(c=getchar())>='0'&&c<='9');
 	return x;
 }
+
+inline void merge(int &x){
+	int p=pt[x].nx;
+	if(p&&pt[x].s==pt[p].t+1){
+		pt[x].s=pt[p].s;
+		pt[x].nx=pt[p].nx;
+		--ans;
+	}
+	else x=p;
+}
+
 
 int main(){
 #ifndef ONLINE_JUDGE
@@ -42,25 +54,29 @@ int main(){
 		else{
 			a=nxi(),b=nxi();
 			int i=fir[a],j=fir[b];
+			if(!j){
+				fir[b]=i,fir[a]=0;
+				continue;
+			}
 			if(pt[i].s>pt[j].s){
 				fir[b]=i;
 				while(pt[pt[i].nx].s>pt[j].s) i=pt[i].nx;
-				pt[i].nx=j;
+				int p=i;
 				i=pt[i].nx;
+				if(pt[p].s==pt[j].t+1) pt[p].s=pt[j].s;
+				else pt[p].nx=j;
 			}
 			while(i){
 				int &nx=pt[j].nx;
 				if(pt[i].s>pt[nx].s){
-					int p=i,i=pt[i].nx;
+					int p=i;
+					i=pt[i].nx;
 					pt[p].nx=nx;
 					nx=p;
 				}
-				if(pt[j].s==pt[nx].t+1){
-					pt[j].s=pt[nx].s;
-					pt[j].nx=pt[nx].nx;
-				}
-				else j=pt[j].nx;
+				merge(j);
 			}
+			merge(j);
 			fir[a]=0;
 		}
 	}
