@@ -1,7 +1,6 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
-#include<cassert>
 using namespace std;
 const int N=1e5+5;
 int n,m,cnt,ans,fir[N*10];
@@ -54,6 +53,7 @@ int main(){
 		else{
 			a=nxi(),b=nxi();
 			int i=fir[a],j=fir[b];
+			if(a==b) continue;
 			if(!j){
 				fir[b]=i,fir[a]=0;
 				continue;
@@ -63,7 +63,12 @@ int main(){
 				while(pt[pt[i].nx].s>pt[j].s) i=pt[i].nx;
 				int p=i;
 				i=pt[i].nx;
-				if(pt[p].s==pt[j].t+1) pt[p].s=pt[j].s;
+				if(pt[p].s==pt[j].t+1){
+					--ans;
+					pt[p].s=pt[j].s;
+					pt[p].nx=pt[j].nx;
+					j=p;
+				}
 				else pt[p].nx=j;
 			}
 			while(i){
