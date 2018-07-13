@@ -3,14 +3,15 @@
 #include<cstring>
 using namespace std;
 const int N=1e5+5;
-int rt[N];
+int fa[N];
 bool lv[N];
 struct node{
 	int s,l,ls,rs;
 }tr[N];
 
 int frt(int x){
-	return rt[x]?rt[x]=frt(rt[x]):x;
+	while(fa[x]) x=fa[x];
+	return x;
 }
 
 inline int nxi(){
@@ -26,14 +27,15 @@ int merge(int x,int y){
 	if(tr[x].s>tr[y].s) swap(x,y);
 	node &p=tr[x];
 	p.rs=merge(p.rs,y);
-	rt[p.rs]=x;
-	p.l=min(tr[p.ls].l,tr[p.rs].l)+1;
+	fa[p.rs]=x;
+	if(tr[p.ls].l>tr[p.rs].l) swap(p.ls,p.rs);
+	p.l=tr[p.ls].l+1;
 	return x;
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("1986.in","r",stdin);
+	freopen("1.in","r",stdin);
 #endif
 	int n=nxi();
 	for(int i=1;i<=n;++i){
@@ -50,7 +52,7 @@ int main(){
 				int x=frt(i);
 				lv[x]=1;
 				printf("%d\n",tr[x].s);
-				rt[merge(tr[x].ls,tr[x].rs)]=0;
+				fa[merge(tr[x].ls,tr[x].rs)]=0;
 			}
 		}
 		if(op=='M'){
