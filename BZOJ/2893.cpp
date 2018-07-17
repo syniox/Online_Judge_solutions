@@ -20,7 +20,7 @@ inline int nxi(){
 }
 namespace G{
 	int cnt,clk,top,fir[N],stk[N],dfn[N],low[N];
-	bool st[N],ed[N],bh[N],bt[N],in[N],ot[N],vis[N];
+	bool st[N],ed[N],bs[N],be[N],bi[N],bo[N],vis[N];
 	struct edge{
 		int to,nx;
 	}eg[N*20];
@@ -31,17 +31,28 @@ namespace G{
 	}
 
 	inline void init(){
-		clk=cnt=0;
+		cnf=clk=cnt=0;
 		memset(fir,0,sizeof fir);
 		memset(vis,0,sizeof vis);
 		memset(dfn,0,sizeof dfn);
-		memset(in,0,sizeof in);
-		memset(ot,0,sizeof ot);
+		memset(bs,0,sizeof bs);
+		memset(be,0,sizeof be);
+		memset(bi,0,sizeof bi);
+		memset(bo,0,sizeof bo);
 	}
 	inline bool jdg(){
+		for(int x=1;x<=n;++x){
+			for(int i=fir[x];i;i=eg[i].nx){
+				if(i&1) continue;
+				int y=eg[i].to;
+				if(bel[x]!=bel[y]){
+					bo[bel[x]]=bi[bel[y]]=1;
+				}
+			}
+		}
 		for(int i=1;i<=cnf;++i){
-			if(!ot[i]&&!bt[i]) return 0;
-			if(!in[i]&&!bh[i]) return 0;
+			if(!bo[i]&&!be[i]) return 0;
+			if(!bi[i]&&!bs[i]) return 0;
 		}
 		return 1;
 	}
@@ -59,20 +70,21 @@ namespace G{
 			}
 		}
 		if(low[x]==dfn[x]){
+//			printf("f%d\n",x);
 			++cnf;
 			int j(0);
 			while(j!=x){
 				j=stk[top--];
 				bel[j]=cnf;
-				bh[cnf]|=st[j];
-				bt[cnf]|=ed[j];
+				bs[cnf]|=st[j];
+				be[cnf]|=ed[j];
 				vis[j]=1;
 			}
 		}
 	}
 }
 namespace F{
-	int cnt,fr[N<<1],fir[N<<1],que[N<<1],dis[N<<1],pre[N<<1],cnv[N<<1];
+	int cnt,fr[N<<1],fir[N<<1],que[N<<1],dis[N<<1],pre[N<<1];
 	bool vis[N<<1];
 	struct edge{
 		int to,wi,cs,nx;
@@ -89,14 +101,16 @@ namespace F{
 	}
 	inline void make(){
 		for(int x=1;x<=n;++x){
-			if(G::bt[x]) add(x+N,(N<<1)-1,N,0);
-			if(G::bh[x]) add(0,x,N,0);
-			add(x,x+N,1,1);
-			add(x,x+N,N,0);
+			if(x<=cnf){
+				if(G::be[x]) add(x+N,(N<<1)-1,N,0);
+				if(G::bs[x]) add(0,x,N,0);
+				add(x,x+N,1,1);
+				add(x,x+N,N,0);
+			}
 			for(int i=G::fir[x];i;i=G::eg[i].nx){
 				int y=G::eg[i].to;
 				if(bel[x]!=bel[y]){
-					add(x+N,y,N,0);
+					add(bel[x]+N,bel[y],N,0);
 				}
 			}
 		}
@@ -111,11 +125,11 @@ namespace F{
 			if(++hd==N) hd=0;
 			vis[x]=0;
 			for(int i=fir[x];i;i=eg[i].nx){
-				int y=eg[i].to,v=eg[i].wi;
-				if(v&&dis[y]<dis[x]+eg[i].cs){
+				int y=eg[i].to,c=dis[x]+eg[i].cs;
+				if(eg[i].wi&&dis[y]<c){
 					pre[y]=i;
 					fr[y]=x;
-					dis[y]=dis[x]+eg[i].cs;
+					dis[y]=c;
 					if(!vis[y]){
 						que[tl]=y;
 						if(++tl==N) tl=0;
@@ -124,7 +138,7 @@ namespace F{
 				}
 			}
 		}
-		return dis[(N<<1)-1];
+		return dis[(N<<1)-1]>0;
 	}
 	inline void mod(){
 		int x=(N<<1)-1;
@@ -150,7 +164,6 @@ int main(){
 		for(int a,b,i=1;i<=m;++i){
 			a=nxi(),b=nxi();
 			G::add(a,b);
-			G::ot[a]=G::in[b]=1;
 		}
 		for(int i=1;i<=n;++i){
 			if(!G::dfn[i]) G::tarjan(i);
