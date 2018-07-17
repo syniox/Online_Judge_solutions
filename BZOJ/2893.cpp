@@ -58,7 +58,7 @@ namespace G{
 				apn(dfn[x],dfn[y]);
 			}
 		}
-		if(dfn[x]==x){
+		if(low[x]==dfn[x]){
 			++cnf;
 			int j(0);
 			while(j!=x){
@@ -72,8 +72,8 @@ namespace G{
 	}
 }
 namespace F{
-	int cnt,fr[N<<1],fir[N<<1],que[N<<1],dis[N<<1],pre[N<<1];
-	bool vis[N];
+	int cnt,fr[N<<1],fir[N<<1],que[N<<1],dis[N<<1],pre[N<<1],cnv[N<<1];
+	bool vis[N<<1];
 	struct edge{
 		int to,wi,cs,nx;
 	}eg[26005];
@@ -82,7 +82,6 @@ namespace F{
 		memset(fir,0,sizeof(fir));
 	}
 	inline void add(int x,int y,int v,int c){
-		assert(x+N!=y);
 		eg[++cnt]=(edge){y,v,c,fir[x]};
 		fir[x]=cnt;
 		eg[++cnt]=(edge){x,0,-c,fir[y]};
@@ -92,8 +91,8 @@ namespace F{
 		for(int x=1;x<=n;++x){
 			if(G::bt[x]) add(x+N,(N<<1)-1,N,0);
 			if(G::bh[x]) add(0,x,N,0);
-			add(x+N,x,1,1);
-			add(x+N,x,N,0);
+			add(x,x+N,1,1);
+			add(x,x+N,N,0);
 			for(int i=G::fir[x];i;i=G::eg[i].nx){
 				int y=G::eg[i].to;
 				if(bel[x]!=bel[y]){
@@ -103,7 +102,8 @@ namespace F{
 		}
 	}
 	inline bool bfs(){
-		memset(dis,0,sizeof(dis));
+		memset(dis,-1,sizeof(dis));
+		dis[0]=0;
 		int hd=0,tl=1;
 		que[hd]=0;
 		while(hd!=tl){
@@ -111,11 +111,11 @@ namespace F{
 			if(++hd==N) hd=0;
 			vis[x]=0;
 			for(int i=fir[x];i;i=eg[i].nx){
-				int y=eg[i].to,v=dis[x]+eg[i].wi;
-				if(dis[y]<v){
-					pre[y]=v;
+				int y=eg[i].to,v=eg[i].wi;
+				if(v&&dis[y]<dis[x]+eg[i].cs){
+					pre[y]=i;
 					fr[y]=x;
-					dis[y]=v;
+					dis[y]=dis[x]+eg[i].cs;
 					if(!vis[y]){
 						que[tl]=y;
 						if(++tl==N) tl=0;
