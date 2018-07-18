@@ -35,6 +35,8 @@ namespace G{
 		memset(fir,0,sizeof fir);
 		memset(vis,0,sizeof vis);
 		memset(dfn,0,sizeof dfn);
+		memset(st,0,sizeof st);
+		memset(ed,0,sizeof ed);
 		memset(bs,0,sizeof bs);
 		memset(be,0,sizeof be);
 		memset(bi,0,sizeof bi);
@@ -43,7 +45,6 @@ namespace G{
 	inline bool jdg(){
 		for(int x=1;x<=n;++x){
 			for(int i=fir[x];i;i=eg[i].nx){
-				if(i&1) continue;
 				int y=eg[i].to;
 				if(bel[x]!=bel[y]){
 					bo[bel[x]]=bi[bel[y]]=1;
@@ -63,14 +64,13 @@ namespace G{
 			int y=eg[i].to;
 			if(!dfn[y]){
 				tarjan(y);
-				apn(dfn[x],low[y]);
+				apn(low[x],low[y]);
 			}
 			else if(!vis[y]){
-				apn(dfn[x],dfn[y]);
+				apn(low[x],dfn[y]);
 			}
 		}
 		if(low[x]==dfn[x]){
-//			printf("f%d\n",x);
 			++cnf;
 			int j(0);
 			while(j!=x){
@@ -149,10 +149,9 @@ namespace F{
 		}
 	}
 }
-
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+	freopen(".in","r",stdin);
 #endif
 	int T=nxi();
 	while(T--){
