@@ -2,6 +2,7 @@
 #include<cstdio>
 #include<cstring>
 #include<cmath>
+#include<cassert>
 using namespace std;
 int dg;
 double og[8],ans[6],xx[8][6];
@@ -15,9 +16,9 @@ inline int nxi(){
 }
 
 inline void init(){
-	for(int i=1;i<8;++i) xx[i][0]=1;
+	for(int i=0;i<8;++i) xx[i][0]=1;
 	for(int i=1;i<8;++i){
-		for(int j=1;j<8;++j){
+		for(int j=1;j<6;++j){
 			xx[i][j]=xx[i][j-1]*i;
 		}
 	}
@@ -38,16 +39,16 @@ inline void gauss(int p1,int p2){
 		get[i]=j;
 		double p=xs[j][i];
 		for(int k=0;k<dg+3;++k){
-			if(!vis[k]) continue;
+			if(vis[k]) continue;
 			double t=xs[k][i]/p;
 			mg[k]-=mg[j]*t;
-			for(int l=0;l<=dg;++l){
+			for(int l=i;l>=0;--l){
 				xs[k][l]-=xs[j][l]*t;
 			}
 		}
 	}
 
-	get[0]=!p1||!p2?0:get[1]+1;
+	get[0]=!p1||!p2?get[1]+1:0;
 	while(vis[get[0]]) ++get[0];
 	ans[0]=mg[get[0]];
 	for(int i=1;i<=dg;++i){
@@ -64,7 +65,7 @@ inline bool jdg(int k){
 	for(int i=dg;~i;--i){
 		tp+=ans[i]*xx[k][i];
 	}
-	return fabs(tp-og[k])<1e-2;
+	return fabs(tp-og[k])<1e-1;
 }
 
 
@@ -76,6 +77,7 @@ inline int solve(){
 			if(jdg(j)) return i;
 		}
 	}
+	return 0;
 }
 
 int main(){
@@ -83,8 +85,8 @@ int main(){
 	freopen("a.in","r",stdin);
 #endif
 	init();
-	while(dg=nxi()){
-		for(int i=0;i<dg+3;++i) og[i]=nxi();
+	while((dg=nxi())){
+		for(int i=0;i<dg+3;++i) scanf("%lf",og+i);
 		printf("%d\n",solve());
 	}
 	return 0;
