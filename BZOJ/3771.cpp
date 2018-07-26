@@ -4,9 +4,11 @@
 #include<cstring>
 #include<cmath>
 using namespace std;
+typedef long long lint;
 const int L=131072;
-const double P=3.14159265359;
-int n,bit,rev[L],ans[L],org[40000];
+const double P=acos(-1);
+int n,rev[L],org[40001];
+lint ans[L];
 struct cpx{
 	double x,y;
 	cpx operator + (const cpx &b) const{
@@ -29,13 +31,13 @@ inline int nxi(){
 }
 
 inline void init(){
-	bit=17;
+	const int bit=17;
 	for(int i=1;i<L;++i){
 		rev[i]=rev[i>>1]>>1|(i&1)<<(bit-1);
 	}
 }
 
-inline void fft(cpx *x,int f){
+inline void fft(cpx *x,const int f){
 	for(int i=1;i<L;++i){
 		if(i<rev[i]) swap(x[i],x[rev[i]]);
 	}
@@ -55,6 +57,7 @@ inline void fft(cpx *x,int f){
 int main(){
 #ifndef ONLINE_JUDGE
 	freopen("1728.in","r",stdin);
+//	freopen("1728.out","w",stdout);
 #endif
 	init();
 	n=nxi();
@@ -62,26 +65,41 @@ int main(){
 		org[i]=nxi();
 		++A[org[i]].x;
 	}
-	A[0].x=1;
+//3
 	fft(A,1);
 	memcpy(B,A,sizeof(B));
 	for(int i=0;i<L;++i) A[i]=A[i]*A[i]*A[i];
 	fft(A,-1);
 	for(int i=1;i<L;++i){
-		ans[i]=(int)(A[i].x/L+0.5);
+		ans[i]=(lint)(A[i].x/L+0.5);
 	}
+	memset(A,0,sizeof(A));
 	for(int i=1;i<=n;++i){
 		++A[org[i]<<1].x;
 	}
-	A[0].x=1;
 	fft(A,1);
 	for(int i=0;i<L;++i) A[i]=A[i]*B[i];
 	fft(A,-1);
 	for(int i=1;i<L;++i){
-		ans[i]-=(int)(A[i].x/L+0.5);
+		ans[i]-=(lint)(A[i].x/L+0.5)*3;
+	}
+	for(int i=1;i<=n;++i) ans[org[i]*3]+=2;
+	for(int i=0;i<L;++i) ans[i]/=6;
+
+	//2
+	for(int i=0;i<L;++i) B[i]=B[i]*B[i];
+	fft(B,-1);
+	for(int i=1;i<=n;++i) B[org[i]<<1].x-=L;
+	for(int i=1;i<L;++i){
+		ans[i]+=(lint)(B[i].x/L+0.5)>>1;
+	}
+
+
+	for(int i=1;i<=n;++i){
+		++ans[org[i]];
 	}
 	for(int i=1;i<L;++i){
-		if(ans[i]) printf("%d %d\n",i,ans[i]);
+		if(ans[i]) printf("%d %lld\n",i,ans[i]);
 	}
 	return 0;
 }
