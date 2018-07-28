@@ -35,8 +35,14 @@ inline void init(const int mod){
 	}
 }
 
+
 inline lint C(const int n,const int k,const int mod){
 	return (lint)jc[n]*cj[k]%mod*cj[n-k]%mod;
+}
+
+inline lint get_C(const int n,const int k,const int mod){
+	if(k<mod) return C(n,k,mod);
+	return C(n/mod,k/mod,mod)*C(n%mod,k%mod,mod)%mod;
 }
 
 int main(){
@@ -48,7 +54,7 @@ int main(){
 	const int mod=p;
 	for(int i=n;i;--i){
 		sz[i]=1+sz[i<<1]+sz[i<<1|1];
-		dp[i]=C(sz[i]-1,sz[i<<1],mod)*(i<<1>n?1:dp[i<<1])%mod*((i<<1|1)>n?1:dp[i<<1|1])%mod;
+		dp[i]=get_C(sz[i]-1,sz[i<<1],mod)*(i<<1>n?1:dp[i<<1])%mod*((i<<1|1)>n?1:dp[i<<1|1])%mod;
 	}
 	printf("%d\n",dp[1]);
 	return 0;
