@@ -3,7 +3,7 @@
 #include<cstring>
 const int N=1024;
 //wk:work  fg:fight
-int n,m,st,dp[N][513],wk[513][11],fg[513][11];
+int n,m,st,dp[N][513],wk[513][10],fg[513][10];
 
 inline void apx(int &a,const int b){
 	if(a<b) a=b;
@@ -17,7 +17,7 @@ inline int nxi(){
 }
 
 inline void upd(const int x,const int dep){
-	const int p=1<<dep;
+	const int p=1<<(dep-1);
 	for(int i=0;i<=p;++i){
 		for(int j=0;j<=p&&i+j<=m;++j){
 			apx(dp[x][i+j],dp[x<<1][i]+dp[x<<1|1][j]);
@@ -27,10 +27,10 @@ inline void upd(const int x,const int dep){
 
 void dfs(const int x,const int dep){
 	//0:work  1:fight
-	memset(dp[x],0,(1<<dep)+1);
+	memset(dp[x],0,((1<<dep)+1)<<2);
 	if(!dep){
 		const int p=x-(1<<(n-1));
-		for(int i=1;i<=n;++i){
+		for(int i=1;i<n;++i){
 			if(st&(1<<i)) dp[x][1]+=fg[p][i];
 			else dp[x][0]+=wk[p][i];
 		}
