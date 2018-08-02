@@ -24,7 +24,7 @@ inline lint qpow(lint x,int t){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+	freopen("5.in","r",stdin);
 #endif
 	int n,q,cnt=0,ans=0;
 	lint fac=1;
@@ -36,7 +36,7 @@ int main(){
 	}
 	for(int i=n;i;--i){
 		bool p=mk[i];
-		for(int j=i*2;j<=n;++j){
+		for(int j=i*2;j<=n;j+=i){
 			if(mk[j]) p^=1;
 		}
 		cnt+=mk[i]=p;
