@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
+#include<bitset>
 #define ni nxi<int>()
 typedef unsigned long long ull;
 const int N=1e5+2;
@@ -74,7 +75,7 @@ namespace G{
 		nfd[cnt]=x;
 		top[x]=son[fa[x]]==x?top[fa[x]]:x;
 		if(son[x]) dfs2(son[x]);
-		for(int i=1;i<=n;++i){
+		for(int i=fir[x];i;i=eg[i].nx){
 			int y=eg[i].to;
 			if(!dfn[y]) dfs2(y);
 		}
@@ -83,6 +84,8 @@ namespace G{
 
 namespace T{
 	int x,y;
+	//0up 1down
+	bool zf;
 	node tr[N*3];
 	inline void upd(int k){
 		tr[k]=merge(tr[k<<1],tr[k<<1|1]);
@@ -114,33 +117,32 @@ namespace T{
 		int mid=(l+r)>>1;
 		if(x>mid) return ask(k<<1|1,mid+1,r);
 		if(y<=mid) return ask(k<<1,l,mid);
+		if(zf) return merge(ask(k<<1|1,mid+1,r),ask(k<<1,l,mid));
 		return merge(ask(k<<1,l,mid),ask(k<<1|1,mid+1,r));
+	}
+	inline node ask_t(int a,int b,bool zf){
+		T::x=a,T::y=b,T::zf=zf;
+		return T::ask(1,1,n);
 	}
 }
 
 inline ull ask_G(int x,int y,ull z){
 	node getx,gety;
 	const ull ff=~(ull)0;
-	getx=gety=(node){ff,ff,ff,ff};
+	getx=gety=(node){0,ff,0,ff};
 	while(top[x]!=top[y]){
 		if(dep[top[x]]<dep[top[y]]){
-			T::x=dfn[top[x]],T::y=dfn[x];
-			getx=merge(getx,T::ask(1,1,n));
+			getx=merge(getx,T::ask_t(dfn[top[x]],dfn[x],0));
 			x=fa[top[x]];
 		}else{
-			T::x=dfn[top[y]],T::y=dfn[y];
-			gety=merge(gety,T::ask(1,1,n));
+			gety=merge(T::ask_t(dfn[top[y]],dfn[y],1),gety);
 			y=fa[top[y]];
 		}
 	}
-	if(dep[x]>dep[y]){
-		T::x=dfn[y],T::x=dfn[x];
-		getx=merge(getx,T::ask(1,1,n));
-	}
-	else{
-		T::x=dfn[x],T::y=dfn[y];
-		gety=merge(gety,T::ask(1,1,n));
-	}
+	if(dep[x]>dep[y])
+		getx=merge(getx,T::ask_t(dfn[y],dfn[x],0));
+	else
+		gety=merge(T::ask_t(dfn[x],dfn[y],1),gety);
 
 	ull ans0=(getx.s0&gety.v1)|(~getx.s0&gety.v0);
 	ull ans1=(getx.s1&gety.v1)|(~getx.s1&gety.v0);
@@ -176,7 +178,8 @@ int main(){
 	G::dfs2(1);
 	T::build(1,1,n);
 	while(m--){
-		int q=ni,x=ni,y=ni,z=nxi<ull>();
+		int q=ni,x=ni,y=ni;
+		ull z=nxi<ull>();
 		if(q==1) printf("%lld\n",ask_G(x,y,z));
 		else{
 			op[x]=y,hx[x]=z;
