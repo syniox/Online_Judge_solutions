@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
+#include<cassert>
 const int N=1e5+2;
 int n,m,sz[N],fa[N],fir[N],dfn[N];
 struct edge{
@@ -34,10 +35,12 @@ namespace S{
 	}
 	inline void psh(int k,bool f){
 		if(tr[k].f){
-			tr[k].s+=tr[k].f;
+			const int tp=tr[k].f;
 			if(f){
-				tr[k<<1].f+=tr[k].f;
-				tr[k<<1|1].f+=tr[k].f;
+				tr[k<<1].f+=tp;
+				tr[k<<1].s+=tp;
+				tr[k<<1|1].f+=tp;
+				tr[k<<1|1].s+=tp;
 			}
 			tr[k].f=0;
 		}
@@ -86,7 +89,7 @@ namespace S{
 		psh(k,l!=r);
 		if(l>=x&&r<=y){
 			tr[k].f+=v;
-			psh(k,l!=r);
+			tr[k].s+=v;
 			return;
 		}
 		int mid=(l+r)>>1;
@@ -99,8 +102,8 @@ namespace S{
 		mod(1,1,n);
 	}
 	int ask(const int k,const int l,const int r){
-		psh(k,l!=r);
 		if(l>=x&&r<=y) return tr[k].s;
+		psh(k,l!=r);
 		int mid=(l+r)>>1,ans=0;
 		if(x<=mid) apx(ans,ask(k<<1,l,mid));
 		if(y>mid) apx(ans,ask(k<<1|1,mid+1,r));
@@ -126,16 +129,14 @@ namespace L{
 	inline void init(){
 		for(int i=1;i<=n;++i) tr[i].fa=fa[i];
 	}
-	inline void rot(int k){
-		int f=tr[k].fa,ff=tr[f].fa;
-		tr[k].fa=ff;
-		if(ff) tr[ff].s[son(f)]=k;
-		bool s=son(k);
-		int &p=tr[k].s[s^1];
-		tr[f].fa=k;
-		tr[f].s[s]=p;
+	inline void rot(int x){
+		int f=tr[x].fa,k=son(x),p=tr[x].s[k^1];
+		tr[f].s[k]=p;
 		if(p) tr[p].fa=f;
-		p=f;
+		if(!isrt(f)) tr[tr[f].fa].s[son(f)]=x;
+		tr[x].fa=tr[f].fa;
+		tr[f].fa=x;
+		tr[x].s[k^1]=f;
 	}
 	inline void splay(int k){
 		while(!isrt(k)){
@@ -145,22 +146,22 @@ namespace L{
 		}
 	}
 	inline void acs(int x){
-		splay(x);
-		int y=x;
-		while(tr[x].fa){
-			x=tr[x].fa;
+		int y=0;
+		while(x){
 			splay(x);
 			if(tr[x].s[1]){
 				int p=tr[x].s[1];
 				while(tr[p].s[0]) p=tr[p].s[0];
+				tr[x].s[1]=0;
 				S::mod_t(dfn[p],dfn[p]+sz[p]-1,1);
 			}
-
-			int p=y;
-			while(tr[y].s[0]) p=tr[y].s[0];
-			S::mod_t(dfn[p],dfn[p]+sz[p]-1,-1);
-			tr[x].s[1]=y;
+			if(y){
+				int p=tr[x].s[1]=y;
+				while(tr[p].s[0]) p=tr[p].s[0];
+				S::mod_t(dfn[p],dfn[p]+sz[p]-1,-1);
+			}
 			y=x;
+			x=tr[x].fa;
 		}
 	}
 }
@@ -172,7 +173,7 @@ inline int lca(int x,int y){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	freopen("1.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<n;++i){
@@ -194,7 +195,7 @@ int main(){
 				printf("%d\n",lca(x,nxi()));
 				break;
 			case 3:
-				printf("%d\n",S::ask_t(dfn[x],dfn[x]+sz[x])+1);
+				printf("%d\n",S::ask_t(dfn[x],dfn[x]+sz[x]-1)+1);
 				break;
 		}
 	}
