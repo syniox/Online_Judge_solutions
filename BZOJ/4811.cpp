@@ -2,47 +2,46 @@
 #include<cstdio>
 #include<cstring>
 #include<bitset>
+#include<cassert>
 #define ni nxi<int>()
 typedef unsigned long long ull;
 const int N=1e5+2;
-int n,m,bit,op[N],fa[N],hx[N],dep[N],dfn[N],nfd[N],top[N];
+int n,m,bit,op[N],fa[N],dep[N],dfn[N],nfd[N],top[N];
+ull hx[N];
 //&1,|2,^3
 struct node{
-	//s:up v:down
-	ull s0,s1,v0,v1;
+	//u:up d:down
+	ull u0,u1,d0,d1;
 };
+
+inline char gtc(){
+	static char buf[20000],*h,*t;
+	if(h==t){
+		t=(h=buf)+fread(buf,1,20000,stdin);
+	}
+	return *h++;
+}
 
 template <class T> inline T nxi(){
 	T x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
+	while((c=gtc())>'9'||c<'0');
+	while(x=x*10-48+c,(c=gtc())>='0'&&c<='9');
 	return x;
 }
 //calc:graph
 inline ull calc(const ull x,const int k){
-	if(op[k]==1) return x&k;
-	if(op[k]==2) return x|k;
-	return x^k;
+	if(op[k]==1) return x&hx[k];
+	if(op[k]==2) return x|hx[k];
+	return x^hx[k];
 }
 
 inline node merge(const node x,const node y){
 	node ans;
-	ans.s0=(x.s0&y.s1)|(~x.s0&y.s0);
-	ans.s1=(x.s1&y.s1)|(~x.s1&y.s0);
-	ans.v0=(y.v0&x.v1)|(~y.v0&x.v0);
-	ans.v1=(y.v1&x.v1)|(~y.v1&x.v0);
-	return ans;
-}
-
-inline int highbit(ull x){
-	int ans=0;
-	if(x>>32) x>>=32,ans+=32;
-	if(x>>16) x>>=16,ans+=16;
-	if(x>>8) x>>=8,ans+=8;
-	if(x>>4) x>>=4,ans+=4;
-	if(x>>2) x>>=2,ans+=2;
-	if(x>>1) x>>=1,ans+=1;
+	ans.d0=(x.d0&y.d1)|(~x.d0&y.d0);
+	ans.d1=(x.d1&y.d1)|(~x.d1&y.d0);
+	ans.u0=(y.u0&x.u1)|(~y.u0&x.u0);
+	ans.u1=(y.u1&x.u1)|(~y.u1&x.u0);
 	return ans;
 }
 
@@ -85,15 +84,14 @@ namespace G{
 namespace T{
 	int x,y;
 	//0up 1down
-	bool zf;
 	node tr[N*3];
 	inline void upd(int k){
 		tr[k]=merge(tr[k<<1],tr[k<<1|1]);
 	}
 	void build(int k,int l,int r){
 		if(l==r){
-			tr[k].v0=tr[k].s0=calc(0,nfd[l]);
-			tr[k].v1=tr[k].s1=calc(1,nfd[l]);
+			tr[k].u0=tr[k].d0=calc(0,nfd[l]);
+			tr[k].u1=tr[k].d1=calc(~0ull,nfd[l]);
 			return;
 		}
 		int mid=(l+r)>>1;
@@ -103,8 +101,8 @@ namespace T{
 	}
 	void mod(int k,int l,int r){
 		if(l==r){
-			tr[k].v0=tr[k].s0=calc(0,nfd[l]);
-			tr[k].v1=tr[k].s1=calc(1,nfd[l]);
+			tr[k].u0=tr[k].d0=calc(0,nfd[l]);
+			tr[k].u1=tr[k].d1=calc(~0ull,nfd[l]);
 			return;
 		}
 		int mid=(l+r)>>1;
@@ -117,12 +115,12 @@ namespace T{
 		int mid=(l+r)>>1;
 		if(x>mid) return ask(k<<1|1,mid+1,r);
 		if(y<=mid) return ask(k<<1,l,mid);
-		if(zf) return merge(ask(k<<1|1,mid+1,r),ask(k<<1,l,mid));
+//		if(!zf) return merge(ask(k<<1|1,mid+1,r),ask(k<<1,l,mid));
 		return merge(ask(k<<1,l,mid),ask(k<<1|1,mid+1,r));
 	}
-	inline node ask_t(int a,int b,bool zf){
-		T::x=a,T::y=b,T::zf=zf;
-		return T::ask(1,1,n);
+	inline node ask_t(int a,int b){
+		T::x=a,T::y=b;
+		return ask(1,1,n);
 	}
 }
 
@@ -130,32 +128,35 @@ inline ull ask_G(int x,int y,ull z){
 	node getx,gety;
 	const ull ff=~(ull)0;
 	getx=gety=(node){0,ff,0,ff};
+	//upper segment always first
 	while(top[x]!=top[y]){
-		if(dep[top[x]]<dep[top[y]]){
-			getx=merge(getx,T::ask_t(dfn[top[x]],dfn[x],0));
+		if(dep[top[x]]>dep[top[y]]){
+			getx=merge(T::ask_t(dfn[top[x]],dfn[x]),getx);
 			x=fa[top[x]];
 		}else{
-			gety=merge(T::ask_t(dfn[top[y]],dfn[y],1),gety);
+			gety=merge(T::ask_t(dfn[top[y]],dfn[y]),gety);
 			y=fa[top[y]];
 		}
 	}
 	if(dep[x]>dep[y])
-		getx=merge(getx,T::ask_t(dfn[y],dfn[x],0));
+		getx=merge(T::ask_t(dfn[y],dfn[x]),getx);
 	else
-		gety=merge(T::ask_t(dfn[x],dfn[y],1),gety);
+		gety=merge(T::ask_t(dfn[x],dfn[y]),gety);
 
-	ull ans0=(getx.s0&gety.v1)|(~getx.s0&gety.v0);
-	ull ans1=(getx.s1&gety.v1)|(~getx.s1&gety.v0);
-	int i=highbit(z);
+	ull ans0=(getx.u0&gety.d1)|(~getx.u0&gety.d0);
+	ull ans1=(getx.u1&gety.d1)|(~getx.u1&gety.d0);
 	ull ans=0;
 	bool f=0;
-	for(;i>=0;--i){
-		if(ans0&(1ll<<i)){
-			if(z&(1ll<<i)) f=1;
-			ans|=(1ll<<i);
+	for(int i=63;i>=0;--i){
+		if(ans0&(1ull<<i)){
+			if(z&(1ull<<i)) f=1;
+			ans|=1ull<<i;
 		}
-		else if(ans1&(1ll<<i)){
-			if(f||(z&(1ll<<i))) ans|=(1ll<<i);
+		else{
+			if((ans1&(1ull<<i))){
+				if(f||(z&(1ull<<i))) ans|=1ull<<i;
+			}
+			else if(z&(1ull<<i)) f=1;
 		}
 	}
 	return ans;
@@ -163,11 +164,11 @@ inline ull ask_G(int x,int y,ull z){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	freopen("8.in","r",stdin);
 #endif
 	n=ni,m=ni,bit=ni;
 	for(int i=1;i<=n;++i){
-		op[i]=ni,hx[i]=ni;
+		op[i]=ni,hx[i]=nxi<ull>();
 	}
 	for(int i=1;i<n;++i){
 		int x=ni,y=ni;
@@ -180,10 +181,10 @@ int main(){
 	while(m--){
 		int q=ni,x=ni,y=ni;
 		ull z=nxi<ull>();
-		if(q==1) printf("%lld\n",ask_G(x,y,z));
+		if(q==1) printf("%llu\n",ask_G(x,y,z));
 		else{
 			op[x]=y,hx[x]=z;
-			T::x=x;
+			T::x=dfn[x];
 			T::mod(1,1,n);
 		}
 	}
