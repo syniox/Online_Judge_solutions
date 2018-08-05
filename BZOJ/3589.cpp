@@ -6,7 +6,6 @@
 const int N=2e5+2;
 const int mo=2147483647;
 typedef long long lint;
-typedef unsigned uint;
 int n,fa[N],sz[N],dep[N],top[N],dfn[N],p_lca[1<<5];
 
 inline char gtc(){
@@ -67,60 +66,10 @@ inline int lca(int x,int y){
 	}
 	return dep[x]<dep[y]?x:y;
 }
-/*
-namespace T{
-	int x,y,v;
-	struct node{
-		unsigned f,s;
-	}tr[N*3];
-	inline void upd(int k){
-		tr[k].s=(tr[k<<1].s+tr[k<<1|1].s)&mo;
-	}
-	inline void psh(int k,int l,int r){
-		if(tr[k].f){
-			if(l!=r){
-				unsigned p=tr[k].f,mid=(l+r)>>1;
-				tr[k<<1].f+=p;
-				tr[k<<1].s+=p*(mid-l+1);
-				tr[k<<1|1].f+=p;
-				tr[k<<1|1].s+=p*(r-mid);
-			}
-			tr[k].f=0;
-		}
-	}
-	void mod(int k,int l,int r){
-		psh(k,l,r);
-		if(l>=x&&r<=y){
-			tr[k].f=(tr[k].f+v)&mo;
-			tr[k].s=(tr[k].s+(lint)(r-l+1)*v)&mo;
-			return;
-		}
-		int mid=(l+r)>>1;
-		if(x<=mid) mod(k<<1,l,mid);
-		if(y>mid) mod(k<<1|1,mid+1,r);
-		upd(k);
-	}
-	int ask(int k,int l,int r){
-		if(l>=x&&r<=y) return tr[k].s;
-		psh(k,l,r);
-		int ans=0,mid=(l+r)>>1;
-		if(x<=mid) ans+=ask(k<<1,l,mid);
-		if(y>mid) ans+=ask(k<<1|1,mid+1,r);
-		return ans;
-	}
-	inline void mod_t(int x,int v){
-		T::x=dfn[x],T::y=dfn[x]+sz[x]-1,T::v=v;
-		mod(1,1,n);
-	}
-	inline int ask_t(int x,int y){
-		T::x=x,T::y=y;
-		return ask(1,1,n);
-	}
-}*/
 
 struct B_I_T{
-	unsigned tr[N];
-	inline void mod(int x,unsigned v){
+	int tr[N];
+	inline void mod(int x,int v){
 		for(;x<=n;x+=x&-x){
 			tr[x]=(tr[x]+v)&mo;
 		}
@@ -129,8 +78,8 @@ struct B_I_T{
 		mod(dfn[x],v);
 		mod(dfn[x]+sz[x],-v);
 	}
-	inline unsigned ask(int x){
-		unsigned ans=0;
+	inline int ask(int x){
+		int ans=0;
 		for(;x;x-=x&-x){
 			ans=(ans+tr[x])&mo;
 		}
@@ -139,22 +88,10 @@ struct B_I_T{
 }tr1,tr2;
 //1:sum 2:with dep
 
-inline unsigned clen(int x){
-	uint ans1=tr1.ask(x),ans2=tr2.ask(x);
+inline int clen(int x){
+	int ans1=tr1.ask(dfn[x]),ans2=tr2.ask(dfn[x]);
 	return (lint)(ans1*(dep[x]+1)-ans2)&mo;
 }
-/*
-unsigned dfs(int t,int lst,int limit){
-	static int vis;
-	if(t==0) return clen(p_lca[vis]);
-	unsigned ans=0;
-	for(int i=lst+1;i<=limit;++i){
-		vis|=vis^(1<<i);
-		ans=(ans+dfs(t-1,i,limit))&mo;
-		vis&=vis^(1<<i);
-	}
-	return ans;
-}*/
 
 inline int solve(int k){
 	static int oga[5],ogb[5],zf[1<<5],_dp[1<<5],p_lca[1<<5];
@@ -170,7 +107,7 @@ inline int solve(int k){
 		_dp[1<<i]=ogb[i];
 		zf[1<<i]=1;
 	}
-	unsigned ans=0;
+	int ans=0;
 	for(int i=1;i<1<<k;++i){
 		int lt=i&-i;
 		if(!p_lca[i]){
@@ -200,7 +137,7 @@ int main(){
 	int q=nxi();
 	while(q--){
 		int op=nxi(),k=nxi();
-		if(op) printf("%u\n",solve(k));
+		if(op) printf("%d\n",solve(k));
 		else{
 			int v=nxi();
 			tr1.mod_t(k,v);
