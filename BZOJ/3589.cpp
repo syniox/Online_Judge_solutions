@@ -1,9 +1,12 @@
+//ans[y]=(dep[y]+1)*v[x]-dep[x]*v[x](dep[x]<dep[y],lca(x,y)==x);
 #include<iostream>
 #include<cstdio>
 #include<cstring>
 #include<cassert>
 const int N=2e5+2;
 const int mo=2147483647;
+typedef long long lint;
+typedef unsigned uint;
 int n,fa[N],sz[N],dep[N],top[N],dfn[N],p_lca[1<<5];
 
 inline char gtc(){
@@ -64,9 +67,9 @@ inline int lca(int x,int y){
 	}
 	return dep[x]<dep[y]?x:y;
 }
-
+/*
 namespace T{
-	unsigned x,y,v;
+	int x,y,v;
 	struct node{
 		unsigned f,s;
 	}tr[N*3];
@@ -113,56 +116,78 @@ namespace T{
 		T::x=x,T::y=y;
 		return ask(1,1,n);
 	}
-}
+}*/
 
-inline int clen(int x){
-	int ans=0;
-	while(x){
-		ans=(ans+T::ask_t(dfn[top[x]],dfn[x]))&mo;
-		x=fa[top[x]];
+struct B_I_T{
+	unsigned tr[N];
+	inline void mod(int x,unsigned v){
+		for(;x<=n;x+=x&-x){
+			tr[x]=(tr[x]+v)&mo;
+		}
 	}
-	return ans;
-}
+	inline void mod_t(int x,int v){
+		mod(dfn[x],v);
+		mod(dfn[x]+sz[x],-v);
+	}
+	inline unsigned ask(int x){
+		unsigned ans=0;
+		for(;x;x-=x&-x){
+			ans=(ans+tr[x])&mo;
+		}
+		return ans;
+	}
+}tr1,tr2;
+//1:sum 2:with dep
 
+inline unsigned clen(int x){
+	uint ans1=tr1.ask(x),ans2=tr2.ask(x);
+	return (lint)(ans1*(dep[x]+1)-ans2)&mo;
+}
+/*
 unsigned dfs(int t,int lst,int limit){
 	static int vis;
 	if(t==0) return clen(p_lca[vis]);
 	unsigned ans=0;
-	for(int i=lst+1;i<=limit-t+1;++i){
+	for(int i=lst+1;i<=limit;++i){
 		vis|=vis^(1<<i);
 		ans=(ans+dfs(t-1,i,limit))&mo;
 		vis&=vis^(1<<i);
 	}
 	return ans;
-}
+}*/
 
 inline int solve(int k){
-	static int org[5];
+	static int oga[5],ogb[5],zf[1<<5],_dp[1<<5],p_lca[1<<5];
+	memset(zf,0,sizeof zf);
+	memset(p_lca,0,sizeof p_lca);
+	memset(_dp,0,sizeof _dp);
 	for(int i=0;i<k;++i){
-		int a=nxi(),b=nxi();
-		if(a==1) org[i]=b;
-		else org[i]=a;
+		oga[i]=nxi(),ogb[i]=nxi();
+		if(dep[oga[i]]<dep[ogb[i]]) std::swap(oga[i],ogb[i]);
 	}
-	memset(p_lca,0,sizeof(p_lca));
 	for(int i=0;i<k;++i){
-		p_lca[1<<i]=org[i];
-	}
-	for(int i=3;i<1<<k;++i){
-		int lwbt=i&-i;
-		if(!p_lca[i]){
-			p_lca[i]=lca(p_lca[i^lwbt],p_lca[lwbt]);
-		}
+		p_lca[1<<i]=oga[i];
+		_dp[1<<i]=ogb[i];
+		zf[1<<i]=1;
 	}
 	unsigned ans=0;
-	for(int i=1;i<=k;++i){
-		ans=(ans+(i&1?1:-1)*dfs(i,-1,k-1))&mo;
+	for(int i=1;i<1<<k;++i){
+		int lt=i&-i;
+		if(!p_lca[i]){
+			p_lca[i]=lca(p_lca[i^lt],p_lca[lt]);
+			_dp[i]=dep[_dp[i^lt]]>dep[_dp[lt]]?_dp[i^lt]:_dp[lt];
+			zf[i]=-zf[i^lt];
+		}
+		if(dep[p_lca[i]]>=dep[_dp[i]]){
+			ans=(ans+zf[i]*(clen(p_lca[i])-clen(fa[_dp[i]])))&mo;
+		}
 	}
 	return ans;
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("8.in","r",stdin);
+//	freopen(".in","r",stdin);
 #endif
 	n=nxi();
 	for(int i=1;i<n;++i){
@@ -176,7 +201,11 @@ int main(){
 	while(q--){
 		int op=nxi(),k=nxi();
 		if(op) printf("%u\n",solve(k));
-		else T::mod_t(k,nxi());
+		else{
+			int v=nxi();
+			tr1.mod_t(k,v);
+			tr2.mod_t(k,(lint)v*dep[k]&mo);
+		}
 	}
 	return 0;
 }
