@@ -24,7 +24,7 @@ namespace T{
 	int cnt;
 	struct node{
 		int s,c[2];
-	}tr[N*15];
+	}tr[N*32];
 	void mod(int x,int t){
 		int p=rt[t-1],np=++cnt;
 		rt[t]=np;
@@ -40,7 +40,7 @@ namespace T{
 				np=tr[np].c[0]=++cnt;
 			}
 		}
-		++tr[np].s;
+		++tr[np].s;//
 	}
 }
 
@@ -76,7 +76,7 @@ inline int solve(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+//	freopen("b.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	rt[0]=T::cnt=1;
