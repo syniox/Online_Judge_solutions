@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
+#include<cassert>
 const int N=3005;
 int n,m,sz[N],fir[N],dp[N][N][3];
 struct edge{
@@ -34,22 +35,23 @@ inline int nxi(){
 }
 
 void dfs(const int x,const int fa){
-	dp[x][0][0]=dp[x][0][1]=0;
+	memset(dp[x][0],0,3<<2);
 	sz[x]=1;
 	for(int i=fir[x];i;i=eg[i].nx){
 		int y=eg[i].to;
 		if(y==fa) continue;
 		dfs(y,x);
-		int w=eg[i].wi;
-		for(int i=1;i<=std::min(sz[x],m);++i){
-			for(int j=1;j<=std::min(sz[y],m-i);++i){
+		int w=eg[i].wi,ltj=std::min(sz[x]-1,m-1);
+		for(int j=ltj;j>=0;--j){
+			int ltk=std::min(sz[y]-1,m-j-1);
+			for(int k=0;k<=ltk;++k){
 
-				apn(dp[x][i+j][0],dp[x][i][0]+dp[y][j][0]+(w<<1));
-				apn(dp[x][i+j][1],dp[x][i][0]+dp[y][j][1]+w);
-				apn(dp[x][i+j][1],dp[x][i][1]+dp[y][j][0]+(w<<1));
-				apn(dp[x][i+j][2],dp[x][i][0]+dp[y][j][2]+(w<<1));
-				apn(dp[x][i+j][2],dp[x][i][1]+dp[y][j][1]+w);
-				apn(dp[x][i+j][2],dp[x][i][2]+dp[y][j][0]+(w<<1));
+				apn(dp[x][j+k+1][0],dp[x][j][0]+dp[y][k][0]+(w<<1));
+				apn(dp[x][j+k+1][1],dp[x][j][0]+dp[y][k][1]+w);
+				apn(dp[x][j+k+1][1],dp[x][j][1]+dp[y][k][0]+(w<<1));
+				apn(dp[x][j+k+1][2],dp[x][j][0]+dp[y][k][2]+(w<<1));
+				apn(dp[x][j+k+1][2],dp[x][j][1]+dp[y][k][1]+w);
+				apn(dp[x][j+k+1][2],dp[x][j][2]+dp[y][k][0]+(w<<1));
 			}
 		}
 		sz[x]+=sz[y];
@@ -60,9 +62,9 @@ int main(){
 #ifndef ONLINE_JUDGE
 	freopen("a.in","r",stdin);
 #endif
-	memset(dp,31,sizeof(dp));
+	memset(dp,60,sizeof(dp));
 	n=nxi(),m=nxi();
-	for(int i=1;i<=n;++i){
+	for(int i=1;i<n;++i){
 		int a=nxi(),b=nxi(),v=nxi();
 		add(a,b,v);
 		add(b,a,v);
@@ -70,7 +72,9 @@ int main(){
 	dfs(1,0);
 	int ans=1<<30;
 	for(int i=1;i<=n;++i){
-		apn(ans,dp[i][m][2]);
+		apn(ans,dp[i][m-1][0]);
+		apn(ans,dp[i][m-1][1]);
+		apn(ans,dp[i][m-1][2]);
 	}
 	printf("%d\n",ans);
 	return 0;
