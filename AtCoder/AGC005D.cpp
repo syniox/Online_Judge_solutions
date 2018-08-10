@@ -30,13 +30,13 @@ inline int nxi(){
 inline void init(){
 	fac[0]=1;
 	for(int i=1;i<N;++i){
-		fac[i]=(lint)fac[i-1]*i;
+		fac[i]=(lint)fac[i-1]*i%mod;
 	}
 }
 
 inline void calc(int dp[N][2],int limit){
 	for(int i=0;i<=limit;++i){
-		dp[i][0]+=dp[i][1];
+		twk(dp[i][0]+=dp[i][1]);
 	}
 	for(int i=limit;i;--i){
 		int tp=0;
@@ -47,12 +47,12 @@ inline void calc(int dp[N][2],int limit){
 	}
 }
 
-inline void getans(int dp[N],int dp2[N][2],int len){
+inline void getans(int dp[N],int dp2[N][2],int limit,int len){
 	for(int i=1;i<=len;++i){
-		for(int j=m;j>=0;--j){
-			int cnt=0;
-			for(int k=0;k<=j;++k){
-				cnt=(cnt+(lint)dp[k]*dp2[j-k][0])%mod;
+		for(int j=n;j>=0;--j){
+			int cnt=0,tp=std::min(limit,j);
+			for(int k=0;k<=tp;++k){
+				cnt=(cnt+(lint)dp[j-k]*dp2[k][0])%mod;
 			}
 			dp[j]=cnt;
 		}
@@ -69,7 +69,7 @@ int main(){
 	dp1[0][0]=1;
 	for(int i=2;i<=limit;++i){
 		for(int j=limit;j;--j){
-			dp1[j][0]=dp1[j][0]+dp1[j][1];
+			twk(dp1[j][0]=dp1[j][0]+dp1[j][1]);
 			dp1[j][1]=dp1[j-1][0];
 		}
 	}
@@ -81,12 +81,12 @@ int main(){
 	}
 	calc(dp2,limit+1);
 	dp[0]=1;
-	getans(dp,dp1,n-n%m);
-	getans(dp,dp2,n%m);
+	getans(dp,dp1,limit,m-n%m);
+	getans(dp,dp2,limit+1,n%m);
 	int ans=0;
-	for(int i=1;i<=m;++i){
-		twk(ans+=(i&1?1:-1)*dp[i]);
+	for(int i=1;i<=n;++i){
+		twk(ans+=(i&1?1:-1)*(lint)dp[i]*fac[n-i]%mod);
 	}
-	printf("%d\n",ans);
+	printf("%d\n",(fac[n]-ans+mod)%mod);
 	return 0;
 }
