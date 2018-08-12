@@ -2,7 +2,7 @@
 #include<cstdio>
 #include<cstring>
 typedef long long lint;
-const int N=3002;
+const int N=50005;
 int n;
 
 inline int gcd(int x,int y){
@@ -59,7 +59,7 @@ namespace T{
 		tr[x].sx+=f*sz;
 		tr[x].lv+=f*sz*(sz+1)>>1;
 		tr[x].rv+=f*sz*(sz+1)>>1;
-		//
+		tr[x].v+=f*sz*(sz+1)*(sz+2)/6;
 	}
 	void psh(int x){
 		if(tr[x].fa) psh(tr[x].fa);
@@ -115,6 +115,7 @@ namespace T{
 	inline void split(int x,int y){
 		mrt(x);
 		acs(y);
+		splay(y);
 	}
 	inline bool same_rt(int x,int y){
 		acs(x),splay(x);
@@ -123,10 +124,10 @@ namespace T{
 	}
 	inline void cut(int x,int y){
 		split(x,y);
-		if(tr[y].fa==x){
-			tr[y].fa=0;
-			tr[x].c[1]=0;
-			upd(x);
+		if(tr[x].fa==y){
+			tr[x].fa=0;
+			tr[y].c[1]=0;
+			upd(y);
 		}
 	}
 	inline void link(int x,int y){
@@ -138,10 +139,14 @@ namespace T{
 }
 
 int main(){
+#ifndef ONLINE_JUDGE
+	freopen("2.in","r",stdin);
+#endif
 	n=nxi();
 	int m=nxi();
 	for(int i=1;i<=n;++i){
 		T::tr[i].hx=nxi();
+		T::upd(i);
 	}
 	for(int i=1;i<n;++i){
 		int a=nxi(),b=nxi();
@@ -160,7 +165,7 @@ int main(){
 				d=nxi();
 				if(T::same_rt(x,y)){
 					T::split(x,y);
-					T::add(x,d);
+					T::add(y,d);
 				}
 				break;
 			case 4:
@@ -168,11 +173,16 @@ int main(){
 				else{
 					using namespace T;
 					split(x,y);
-					lint a=tr[x].v,b=tr[x].sz*(tr[x].sz+1)>>1,g=gcd(a,b);
+					lint a=tr[y].v,b=tr[y].sz*(tr[y].sz+1)>>1,g=gcd(a,b);
 					printf("%lld/%lld\n",a/g,b/g);
 				}
 				break;
 		}
+/*		for(int i=1;i<=n;++i){
+			using T::tr;
+			printf("%d:v%lld f%d l%d r%d\n",i,tr[i].v,tr[i].fa,tr[i].c[0],tr[i].c[1]);
+		}
+		puts("---");*/
 	}
 	return 0;
 }
