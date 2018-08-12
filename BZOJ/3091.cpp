@@ -1,8 +1,13 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
+typedef long long lint;
 const int N=3002;
 int n;
+
+inline int gcd(int x,int y){
+	return y?gcd(y,x%y):x;
+}
 
 inline char gtc(){
 	static char buf[20000],*h,*t;
@@ -20,43 +25,57 @@ inline int nxi(){
 	return x;
 }
 
-namespace G{
-	int fir[N],son[N],sz[N];
-	struct edge{
-		int to,nx;
-	}eg[N<<1];
-	inline void add(int a,int b){
-		static int cnt;
-		eg[++cnt]=(edge){b,fir[a]};
-		fir[a]=cnt;
-	}
-}
 namespace T{
 	struct node{
-		//hex sum_hx size father child
-		int hx,sx,sz,ans,fa,c[2];
+		//size father child
+		int sz,fa,c[2];
+		//flag hex sum_hx lrank*hex rrank*hex value
+		lint f,hx,sx,lv,rv,v;
 		bool rev;
 	}tr[N];
-	inline void upd(int k){
-		tr[k].sz=tr[tr[k].c[0]].sz+tr[tr[k].c[1]].sz+1;
-	}
 	inline bool side(int k){
 		return tr[tr[k].fa].c[1]==k;
 	}
 	inline bool isrt(int k){
 		return tr[tr[k].fa].c[0]!=k&&tr[tr[k].fa].c[1]!=k;
 	}
-	void getrev(int x){
-		if(tr[x].fa) getrev(tr[x].fa);
+	inline void rever(int k){
+		std::swap(tr[k].lv,tr[k].rv);
+		std::swap(tr[k].c[0],tr[k].c[1]);
+		tr[k].rev^=1;
+	}
+	inline void upd(int k){
+		node &x=tr[k],&l=tr[x.c[0]],&r=tr[x.c[1]];
+		x.sz=l.sz+r.sz+1;
+		x.sx=x.hx+l.sx+r.sx;
+		x.lv=l.lv+r.lv+(r.sx+x.hx)*(l.sz+1);
+		x.rv=l.rv+r.rv+(l.sx+x.hx)*(r.sz+1);
+		x.v=l.v+r.v+l.lv*(r.sz+1)+r.rv*(l.sz+1)+x.hx*(l.sz+1)*(r.sz+1);
+	}
+	inline void add(int x,int f){
+		int sz=tr[x].sz;
+		tr[x].f+=f;
+		tr[x].hx+=f;
+		tr[x].sx+=f*sz;
+		tr[x].lv+=f*sz*(sz+1)>>1;
+		tr[x].rv+=f*sz*(sz+1)>>1;
+		//
+	}
+	void psh(int x){
+		if(tr[x].fa) psh(tr[x].fa);
 		if(tr[x].rev){
-			std::swap(tr[x].c[0],tr[x].c[1]);
-			tr[tr[x].c[0]].rev^=1;
-			tr[tr[x].c[1]].rev^=1;
+			rever(tr[x].c[0]);
+			rever(tr[x].c[1]);
 			tr[x].rev=0;
+		}
+		if(tr[x].f){
+			add(tr[x].c[0],tr[x].f);
+			add(tr[x].c[1],tr[x].f);
+			tr[x].f=0;
 		}
 	}
 	inline void rot(int x){
-		int f=tr[k].fa,ff=tr[f].fa;
+		int f=tr[x].fa,ff=tr[f].fa;
 		bool k=side(x);
 		int &p=tr[x].c[k^1];
 		if(!isrt(f)) tr[ff].c[side(f)]=x;
@@ -69,7 +88,7 @@ namespace T{
 		upd(x);
 	}
 	inline void splay(int x){
-		getrev(x);
+		psh(x);
 		while(!isrt(x)){
 			int f=tr[x].fa;
 			if(!isrt(f)){
@@ -77,15 +96,6 @@ namespace T{
 			}
 			rot(x);
 		}
-	}
-	inline int get_rt(int x){
-		splay(x);
-		while(tr[x].fa){
-			x=tr[x].fa;
-			splay(x);
-		}
-		while(tr[x].c[0]) x=tr[x].c[0];
-		return x;
 	}
 	inline void acs(int x){
 		int y=0;
@@ -99,35 +109,30 @@ namespace T{
 	}
 	inline void mrt(int x){
 		acs(x);
-		tr[x].rev^=1;
+		splay(x);
+		rever(x);
 	}
-}
-
-void dfs1(int x){
-	using namespace G;
-	sz[x]=1;
-	for(int i=fir[x];i;i=eg[i].nx){
-		int y=eg[i].to;
-		if(!sz[y]){
-			sz[y]=1;
-			init(y);
-			if(sz[y]>sz[son[x]]) son[x]=y;
-			sz[x]+=sz[y];
+	inline void split(int x,int y){
+		mrt(x);
+		acs(y);
+	}
+	inline bool same_rt(int x,int y){
+		acs(x),splay(x);
+		acs(y),splay(y);
+		return tr[x].fa;
+	}
+	inline void cut(int x,int y){
+		split(x,y);
+		if(tr[y].fa==x){
+			tr[y].fa=0;
+			tr[x].c[1]=0;
+			upd(x);
 		}
 	}
-}
-
-void dfs2(int x){
-	T::tr[x].sz=1;
-	using namespace G;
-	for(int i=fir[x];i;i=eg[i].nx){
-		int y=eg[i].to;
-		if(!T::tr[y].sz){
-			dfs(y);
-			if(y==son[x]){
-				tr[x].c[1]=y;
-				T::upd(x);
-			}
+	inline void link(int x,int y){
+		if(!same_rt(x,y)){
+			rever(x);
+			tr[x].fa=y;
 		}
 	}
 }
@@ -136,45 +141,38 @@ int main(){
 	n=nxi();
 	int m=nxi();
 	for(int i=1;i<=n;++i){
-		tr[i].hx=nxi();
+		T::tr[i].hx=nxi();
 	}
 	for(int i=1;i<n;++i){
 		int a=nxi(),b=nxi();
-		G::add(a,b);
-		G::add(b,a);
+		T::link(a,b);
 	}
-	dfs1(1);
-	dfs2(1);
 	while(m--){
 		int d,op=nxi(),x=nxi(),y=nxi();
 		switch(op){
 			case 1:
-				if(get_rt(x)==get_rt(y)){
-					T::mrt(x);
-					T::acs(y);
-					T::splay(y);
-					if(tr[x].fa==y){
-						tr[x].fa=0;
-						tr[y].c[0]=0;
-						upd(y);
-					}
-				}
+				T::cut(x,y);
 				break;
 			case 2:
-				if(get_rt(x)!=get_rt(y)){
-					mrt(y);
-					tr[y].fa=x;
-				}
+				T::link(x,y);
 				break;
 			case 3:
 				d=nxi();
-				if(get_rt(x)==get_rt(y)){
-
+				if(T::same_rt(x,y)){
+					T::split(x,y);
+					T::add(x,d);
 				}
 				break;
 			case 4:
-
+				if(!T::same_rt(x,y)) puts("-1");
+				else{
+					using namespace T;
+					split(x,y);
+					lint a=tr[x].v,b=tr[x].sz*(tr[x].sz+1)>>1,g=gcd(a,b);
+					printf("%lld/%lld\n",a/g,b/g);
+				}
 				break;
 		}
 	}
+	return 0;
 }
