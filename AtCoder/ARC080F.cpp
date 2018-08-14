@@ -124,6 +124,6 @@ int main(){
 	while(F::bfs()){
 		ans+=F::dfs(0,N);
 	}
-	printf("%d\n",cnt-ans+(cnj&1));
+	printf("%d\n",cnt-ans+((cnj-ans)&1));
 	return 0;
 }
