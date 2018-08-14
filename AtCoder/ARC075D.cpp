@@ -13,7 +13,7 @@ inline int nxi(){
 	return x;
 }
 
-int dfs(int t,int lt,int tp){
+int dfs(int t,int lt,lint tp){
 	if(t>lt>>1) return tp==0;
 	lint cur=fc[lt-t]-fc[t-1],p=tp/cur,ans=0;
 	if(p*cur>tp) --p;
