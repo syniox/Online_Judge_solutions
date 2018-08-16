@@ -28,13 +28,9 @@ struct B_I_T{
 	}
 }ad;
 
-inline int tri_max(const int a,const int b,const int c){
-	if(a>b) return a>c?a:c;
-	return b>c?b:c;
-}
-inline int tri_min(const int a,const int b,const int c){
-	if(a<b) return a<c?a:c;
-	return b<c?b:c;
+inline bool conts(const int x,const int y,const int z){
+	if(x<z) return y==x+1&&z==y+1;
+	return x==y+1&&y==z+1;
 }
 
 inline char get_c(){
@@ -64,8 +60,8 @@ int main(){
 		}
 	}
 	for(int i=1;i<=n;++i){
-		int x=map[0][i],y=map[1][i],z=map[2][i],w=tri_max(x,y,z);
-		if(w-tri_min(x,y,z)!=2||w%3){
+		int x=map[0][i],y=map[1][i],z=map[2][i],w=x>z?x:z;
+		if(!conts(x,y,z)||w%3){
 			puts("No");
 			return 0;
 		}
