@@ -3,7 +3,7 @@
 #include<algorithm>
 #include<cstring>
 const int N=1e5+2;
-int n,m,q,rev[N];
+int n,m,q,rev[N],ans[N];
 
 struct data{
 	int t,a,id;
@@ -11,6 +11,13 @@ struct data{
 		return t<b.t;
 	}
 }dt[N];
+
+inline void apx(int &x,const int y){
+	if(x<y) x=y;
+}
+inline void apn(int &x,const int y){
+	if(x>y) x=y;
+}
 
 inline int nxi(){
 	int x=0;
@@ -36,12 +43,15 @@ int main(){
 	std::sort(dt+1,dt+q+1);
 	int dpos=1,upos=n,pd=1,cnq=1,r=-1;
 	for(int i=1;i<=m;++i,r=-r){
+//		printf("dpos%d upos%d pd%d\n",dpos,upos,pd);
 		while(cnq<=q&&dt[cnq].t<=rev[i]){
-			int move=r*(dt[cnq].t-rev[i-1]);
-			int ans=pd+(dt[cnq].a-dpos)+move;
-			if(ans<0) ans=0;
-			if(ans>n) ans=n;
-			printf("%d\n",ans);
+			int move=r*(dt[cnq].t-rev[i-1]),dis=dt[cnq].a-dpos;
+			apn(dis,upos-dpos);
+			apx(dis,0);
+			int ans0=pd+dis+move;
+			apn(ans0,n);
+			apx(ans0,0);
+			ans[dt[cnq].id]=ans0;
 			++cnq;
 		}
 		int p=r*(rev[i+1]-rev[i]);
@@ -56,12 +66,17 @@ int main(){
 		}
 	}
 	while(cnq<=q){
-		int move=r*(dt[cnq].t-rev[m]);
-		int ans=pd+(dt[cnq].a-dpos)+move;
-		if(ans<0) ans=0;
-		if(ans>n) ans=n;
-		printf("%d\n",ans);
+		int move=r*(dt[cnq].t-rev[m]),dis=dt[cnq].a-dpos;
+		apn(dis,upos-dpos);
+		apx(dis,0);
+		int ans0=pd+dis+move;
+		apn(ans0,n);
+		apx(ans0,0);
+		ans[dt[cnq].id]=ans0;
 		++cnq;
+	}
+	for(int i=1;i<=q;++i){
+		printf("%d\n",ans[i]);
 	}
 	return 0;
 }
