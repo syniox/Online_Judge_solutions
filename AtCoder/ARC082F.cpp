@@ -29,21 +29,22 @@ inline int nxi(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("c.in","r",stdin);
+	//	freopen("c.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<=m;++i){
 		rev[i]=nxi();
 	}
 	q=nxi();
+	std::sort(rev+1,rev+m+1);
 	for(int i=1;i<=q;++i){
 		dt[i].id=i;
 		dt[i].t=nxi(),dt[i].a=nxi();
 	}
 	std::sort(dt+1,dt+q+1);
-	int dpos=1,upos=n,pd=1,cnq=1,r=-1;
+	int dpos=0,upos=n,pd=0,cnq=1,r=-1;
 	for(int i=1;i<=m;++i,r=-r){
-//		printf("dpos%d upos%d pd%d\n",dpos,upos,pd);
+		//		printf("dpos%d upos%d pd%d\n",dpos,upos,pd);
 		while(cnq<=q&&dt[cnq].t<=rev[i]){
 			int move=r*(dt[cnq].t-rev[i-1]),dis=dt[cnq].a-dpos;
 			apn(dis,upos-dpos);
@@ -54,14 +55,14 @@ int main(){
 			ans[dt[cnq].id]=ans0;
 			++cnq;
 		}
-		int p=r*(rev[i+1]-rev[i]);
+		int p=r*(rev[i]-rev[i-1]);
 		pd+=p;
 		if(r>0&&pd+(upos-dpos)>n){
-			upos-=pd+(upos-dpos)-n;
-			pd=n;
+			upos-=std::min(upos-dpos,pd+(upos-dpos)-n);
+			pd=n-(upos-dpos);
 		}
 		else if(r<0&&pd<0){
-			dpos+=-pd;
+			dpos+=std::min(upos-dpos,-pd);
 			pd=0;
 		}
 	}
