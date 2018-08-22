@@ -77,11 +77,11 @@ namespace G{
 
 inline bool jdg(bool f){
 	static int fhx[N];
-	fhx[cir[1]]=f?sg1[cir[1]]:sg2[cir[1]];
-	for(int i=2;i<=cnc;++i){
+	fhx[0]=f?sg1[cir[cnc]]:sg2[cir[cnc]];
+	for(int i=1;i<=cnc;++i){
 		fhx[cir[i]]=fhx[cir[i-1]]==sg1[cir[i]]?sg2[cir[i]]:sg1[cir[i]];
 	}
-	return fhx[cir[1]]!=fhx[cir[cnc]];
+	return fhx[0]==fhx[cir[cnc]];
 }
 
 int main(){
@@ -95,7 +95,7 @@ int main(){
 	}
 	G::get_circle();
 	for(int i=1;i<=cnc;++i){
-		G::get_sg(i);
+		G::get_sg(cir[i]);
 	}
 	puts(jdg(0)||jdg(1)?"POSSIBLE":"IMPOSSIBLE");
 	return 0;
