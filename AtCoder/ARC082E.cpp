@@ -1,5 +1,6 @@
 #include<iostream>
 #include<cstdio>
+#include<algorithm>
 #include<cstring>
 typedef long long lint;
 const int N=202;
@@ -7,10 +8,29 @@ const int mod=998244353;
 int n,ans,pw2[N];
 struct pnt{
 	int x,y;
+	inline int quad() const {
+		if(x>0&&y>=0) return 1;
+		if(x<=0&&y>0) return 2;
+		if(x<0&&y<=0) return 3;
+		if(x>=0&&y<0) return 4;
+		return 0;
+	}
+	inline pnt abs() const {
+		if(quad()<=2)return *this;
+		return (pnt){-x,-y};
+	}
+	inline friend lint crs(pnt a,pnt b){
+		return (lint)a.x*b.y-(lint)b.x*a.y;
+	}
 	pnt operator - (const pnt &b) const {
 		return (pnt){x-b.x,y-b.y};
 	}
-}pt[N];
+	bool operator < (const pnt &b) const {
+		int l=quad(),r=b.quad();
+		if(l==r) return crs(*this,b)>0;
+		return l<r;
+	}
+}base,pt[N];
 
 inline int nxi(){
 	int x=0;
@@ -20,6 +40,10 @@ inline int nxi(){
 	return x;
 }
 
+inline bool cmp(pnt a,pnt b){
+	return (a-base).abs()<(b-base).abs();
+}
+
 inline void init(){
 	pw2[0]=1;
 	for(int i=1;i<=n;++i){
@@ -27,13 +51,9 @@ inline void init(){
 	}
 }
 
-inline lint crs(pnt a,pnt b){
-	return (lint)a.x*b.y-(lint)b.x*a.y;
-}
-
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("a.in","r",stdin);
+	freopen("a.in","r",stdin);
 #endif
 	n=nxi();
 	init();
@@ -41,15 +61,14 @@ int main(){
 		pt[i].x=nxi();
 		pt[i].y=nxi();
 	}
-	ans=((pw2[n]-(lint)(n-1)*n/2-n-1)%mod+mod)%mod;
+	ans=((pw2[n]-n-1)%mod+mod)%mod;
 	for(int i=1;i<n;++i){
-		for(int j=i+1;j<n;++j){
-			int tot=0;
-			for(int k=j+1;k<=n;++k){
-				if(crs(pt[j]-pt[i],pt[k]-pt[j])==0) ++tot;
-			}
-			//tot+2 dots on a line
-			ans=(ans-pw2[tot]+1)%mod;
+		base=pt[i];
+		std::sort(pt+i+1,pt+n+1,cmp);
+		for(int k=i+1,j=i+1;j<=n;j=k+1){
+			k=j;
+			while(k<n&&crs(pt[j]-pt[i],pt[k+1]-pt[i])==0) ++k;
+			ans=(ans-pw2[k-j+1]+1)%mod;
 		}
 	}
 	printf("%d\n",(ans+mod)%mod);
