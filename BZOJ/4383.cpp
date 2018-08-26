@@ -5,7 +5,7 @@ const int N=1e5+2,M=2e5+2,K=3e5+2;
 int n,g,m,cn,in[(N<<1)+M],dp[(N<<1)+M],pos[N],req[(N<<1)+M],fir[(N<<1)+M];
 struct edge{
 	int to,wi,nx;
-}eg[N<<2];
+}eg[N+K+M*10];
 
 inline void apx(int &x,int y){
 	if(x<y) x=y;
@@ -23,7 +23,6 @@ inline void add(int a,int b,int v){
 	static int cnt;
 	eg[++cnt]=(edge){b,v,fir[a]};
 	fir[a]=cnt;
-//	printf("add:%d\n",b);
 	++in[b];
 }
 
@@ -62,7 +61,7 @@ namespace T{
 
 inline bool topu(){
 	static int que[(N<<1)+M];
-	static bool vis[N];
+	static bool vis[(N<<1)+M];
 	int hd=0,tl=0;
 	for(int i=1;i<=cn;++i){
 		if(!in[i]) que[tl++]=i,apx(dp[i],1);
@@ -70,7 +69,10 @@ inline bool topu(){
 	while(hd!=tl){
 		int x=que[hd++];
 		vis[x]=1;
-		if(req[x]&&dp[x]>req[x]) return 0;
+		if(req[x]){
+			if(dp[x]>req[x]) return 0;
+			else apx(dp[x],req[x]);
+		}
 		for(int i=fir[x];i;i=eg[i].nx){
 			int y=eg[i].to;
 			apx(dp[y],dp[x]+eg[i].wi);
