@@ -65,7 +65,7 @@ inline bool jdg(int k){
 	for(int i=dg;~i;--i){
 		tp+=ans[i]*xx[k][i];
 	}
-	return fabs(tp-og[k])<1e-1;
+	return fabs(tp-og[k])<1e-4;
 }
 
 
