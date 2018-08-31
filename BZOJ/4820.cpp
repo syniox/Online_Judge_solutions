@@ -32,10 +32,8 @@ inline void get_mp(int t){
 		}
 		if(k==m) k=nx[k];
 		for(;k;k=nx[k]){
-//			if(t==3&&i==1){
-//				printf("3,1:%d %d\n",m,k);
-//			}
-			mp[t][i]-=1.0/(1<<(m-k));
+			if(m-k>63) break;
+			mp[t][i]-=1.0/(1ull<<(m-k));
 		}
 	}
 }
@@ -44,10 +42,7 @@ inline void gauss(){
 	for(int i=1;i<=n+1;++i){
 		int j=i;
 		while(j<=n+1&&fabs(mp[j][i])<eps) ++j;
-		if(j>n+1){
-//			puts("????");
-			return;
-		}
+		if(j>n+1) return;
 		std::swap(mp[i],mp[j]);
 		for(int k=1;k<=n+1;++k){
 			if(k==i) continue;
@@ -64,25 +59,19 @@ inline void gauss(){
 }
 
 inline void gauss_init(){
-	const long double men=m<=64?(long double)1/(1ull<<m):0;
 	for(int i=1;i<=n;++i){
 		mp[n+1][i]=1;
 		get_mp(i);
-		mp[i][n+1]=men;
+		mp[i][n+1]=1;
+		//we don't need to know men.
+		//1/(2^m)*men instead of men is also ok.
 	}
 	mp[n+1][0]=1;
-//	for(int i=1;i<=n+1;++i){
-//		for(int j=1;j<=n+1;++j){
-//			printf("%.3lf ",(double)mp[i][j]);
-//		}
-//		printf("->%.3lf\n",(double)mp[i][0]);
-//	}
-//	puts("---");
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+//	freopen("a.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<=n;++i){
@@ -90,8 +79,8 @@ int main(){
 	}
 	gauss_init();
 	gauss();
-	for(int i=1;i<=n+1;++i){
-		printf("%.9lf\n",(double)mp[i][i]);
+	for(int i=1;i<=n;++i){
+		printf("%.10lf\n",(double)mp[i][i]);
 	}
 	return 0;
 }
