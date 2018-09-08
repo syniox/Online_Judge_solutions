@@ -13,11 +13,19 @@ template <class T> inline void apx(T &x,const T y){
 	if(x<y) x=y;
 }
 
+inline char get_c(){
+	static char buf[20000],*h,*t;
+	if(h==t){
+		t=(h=buf)+fread(buf,1,20000,stdin);
+	}
+	return h==t?EOF:*h++;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
+	while((c=get_c())>'9'||c<'0');
+	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
 	return x;
 }
 
@@ -35,30 +43,30 @@ namespace G{
 		fir[a]=cnt;
 	}
 	void dfs(int x,int fa){
-		if(vl[x]==0) dp[x][1][0]=0;
-		else if(vl[x]==1) dp[x][0][1]=0;
-		else dp[x][0][0]=0;
+		dp[x][vl[x]==0][vl[x]==1]=0;
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
 			if(y!=fa){
 				dfs(y,x);
 				lint ndp=1e16;
 				for(int j=0;j<2;++j){
-					for(int k=0;k<3;++k) apn(ndp,dp[y][j][k]);
+					for(int k=0;k<3;++k){
+						if(j==1&&k==2) break;
+						apn(ndp,dp[y][j][k]);
+					}
 				}
 				for(int j=1;j>=0;--j){
 					for(int k=2;k>=0;--k){
-						if(j==1&&k==2) continue;
-						lint tp=1e16;
-						for(int l=j;l>=0;--l){
-							for(int m=k;m>=0;--m){
-								if(dp[x][l][m]<1e15){
-									apn(tp,dp[x][l][m]+dp[y][j-l][k-m]);
-								}
+						if((j==1&&k==2)||dp[x][j][k]>1e15) continue;
+						const lint tp=dp[x][j][k];
+						dp[x][j][k]+=ndp+eg[i].wi;
+						for(int l=0;l<2;++l){
+							for(int m=0;m<3;++m){
+								const int t1=std::min(1,j+l),t2=std::min(2,k+m);
+								if(t1==1&&t2==2) continue;
+								apn(dp[x][t1][t2],tp+dp[y][l][m]);
 							}
 						}
-						apn(tp,dp[x][j][k]+ndp+eg[i].wi);
-						dp[x][j][k]=tp;
 					}
 				}
 			}
@@ -68,7 +76,7 @@ namespace G{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	freopen("6.in","r",stdin);
 #endif
 	int T=nxi();
 	while(T--){
