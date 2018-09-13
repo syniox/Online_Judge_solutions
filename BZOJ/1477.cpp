@@ -41,11 +41,12 @@ int main(){
 		return 0;
 	}
 	lint f,tp;
-	exgcd(f,tp,step,mod);
-	int gfs=gcd(step,mod);
-	while(f<0||tp<0){
-		f+=mod/gfs,tp+=step/gfs;
-	}
+	lint gfs=exgcd(f,tp,step,mod);
+	const int twk=mod/gfs;
+	f*=(y-x)/g;
+	if(f<0) f-=(f/twk)*twk;
+	if(f<0) f+=twk;
+	if(f>twk) f%=twk;
 	printf("%lld\n",f);
 	return 0;
 }
