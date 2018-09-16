@@ -52,7 +52,7 @@ inline void build(const int x){
 	if(col[x]==2) add(0,x,hx[x]);
 	if(!col[x]) add(x,x+N,hx[x]);
 	if(col[x]==1){
-		add(x,(N<<1)-1,1e8);
+		add(x,(N<<1)-1,hx[x]);
 		return;
 	}
 	if(pc)try_add(x,1);
@@ -96,14 +96,14 @@ int dinic_dfs(const int x,const int t){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+//	freopen("b.in","r",stdin);
 #endif
-	R=nxi(),C=nxi(),n=nxi();
+	C=nxi(),R=nxi(),n=nxi();
 	for(int i=1;i<=n;++i){
-		const int x=nxi(),y=nxi();
+		const int y=nxi(),x=nxi();
 		hx[i]=nxi();
-		mp[pm[i]=(lint)(x-1)*R+y]=i;
-		col[i]=(((x+y)&1)<<1)+(bool)(x&2);
+		mp[pm[i]=(lint)(x-1)*C+y]=i;
+		col[i]=(((x+y)&1)<<1)+(bool)((y&2));
 	}
 	for(int i=1;i<=n;++i){
 		build(i);
