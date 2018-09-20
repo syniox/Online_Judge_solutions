@@ -32,6 +32,7 @@ namespace G{
 	}
 
 	void dfs1(const int x){
+		sz[x]=1;
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
 			if(y!=fa[x]){
@@ -149,17 +150,22 @@ namespace T{
 
 inline void get_son_hex(const int x){
 	using namespace G;
+	int cur=0;
 	for(int i=fir[x];i;i=eg[i].nx){
 		const int y=eg[i].to;
-		if(y!=fa[x]&&y!=son[x]){
+		if(y!=fa[x]){
 			get_son_hex(y);
-			T::mod_t(dfn[x],T::ask_t(dfn[y],xdn[y]).ls);
+			if(y!=son[x]){
+				cur+=T::ask_t(dfn[y],xdn[y]).ls;
+			}
 		}
 	}
+	T::mod_t(dfn[x],cur);
 }
 
 inline void mod_g(int x,const int v){
 	int delta=v-hx[x];
+	hx[x]=v;
 	for(;x;x=fa[top[x]]){
 		const T::node v1=T::ask_t(dfn[top[x]],xdn[top[x]]);
 		T::mod_t(dfn[x],delta);
@@ -171,7 +177,7 @@ inline void mod_g(int x,const int v){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+//	freopen("a.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<=n;++i){
@@ -184,6 +190,7 @@ int main(){
 	}
 	G::dfs1(1);
 	G::dfs2(1);
+	memcpy(xdn,dfn,sizeof(dfn));
 	for(int i=1;i<=n;++i){
 		if(!vis[top[i]]){
 			vis[top[i]]=1;
