@@ -1,9 +1,8 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
-#include<cassert>
 typedef long long lint;
-const int N=2e5+2;
+const int N=2e5+10;
 int n,hx[N],fa[N],dfn[N],xdn[N],nfd[N],top[N];
 struct data{
 	lint a,b;
@@ -59,7 +58,8 @@ namespace G{
 }
 
 namespace T{
-	int x,y,va,vb;
+	int x,y;
+	lint va,vb;
 	data tr[N*3];
 	inline data merge(const data &x,const data &y){
 		return (data){std::min(x.a+y.a,x.b),std::min(x.a+y.b,x.b)};
@@ -69,7 +69,7 @@ namespace T{
 	}
 	inline void build(const int k,const int l,const int r){
 		if(l==r){
-			tr[k]=(data){0,hx[dfn[l]]};
+			tr[k]=(data){0,hx[nfd[l]]};
 			return;
 		}
 		const int mid=(l+r)>>1;
@@ -89,14 +89,13 @@ namespace T{
 		upd(k);
 	}
 	data ask(const int k,const int l,const int r){
-//		assert(k);
 		if(l>=x&&r<=y) return tr[k];
 		const int mid=(l+r)>>1;
 		if(y<=mid) return ask(k<<1,l,mid);
 		if(x>mid) return ask(k<<1|1,mid+1,r);
 		return merge(ask(k<<1,l,mid),ask(k<<1|1,mid+1,r));
 	}
-	inline void mod_t(const int x,const int va,const int vb){
+	inline void mod_t(const int x,const lint va,const lint vb){
 		T::x=x,T::va=va,T::vb=vb;
 		mod(1,1,n);
 	}
@@ -108,7 +107,7 @@ namespace T{
 
 inline void get_son_hex(const int x){
 	using namespace G;
-	int cur=0;
+	lint cur=0;
 	for(int i=fir[x];i;i=eg[i].nx){
 		const int y=eg[i].to;
 		if(y!=fa[x]){
