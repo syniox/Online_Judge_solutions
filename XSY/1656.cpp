@@ -4,8 +4,8 @@
 #include<cstring>
 const int N=1002;
 typedef long long lint;
-int n,sp,pos,s1[N],s2[N];
-lint sum,dp[N][N][2];
+int n,sum,sp,pos,s1[N],s2[N];
+lint dp[N][N][2];
 //dp的值算上了不修的那些点的代价
 struct data{
 	int x,u;
@@ -36,7 +36,7 @@ inline void solve(){
 		}
 	}
 	for(int i=1;i<=n;++i){
-		const int tp=dp[i][i][0]=dp[i][i][1]=(lint)s1[n]*abs(pos-dt[i].x);
+		const lint tp=dp[i][i][0]=dp[i][i][1]=(lint)s1[n]*abs(pos-dt[i].x);
 		for(int j=i+1;j<=l;++j) dp[i][l][0]=tp;
 		for(int k=i-1;k>=r;--k) dp[k][i][1]=tp;
 		for(int j=i-1;j;--j){
@@ -56,7 +56,7 @@ inline void solve(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("a.in","r",stdin);
+	freopen("a.in","r",stdin);
 #endif
 	memset(dp,1,sizeof(dp));
 	n=nxi(),sp=nxi(),pos=nxi();
