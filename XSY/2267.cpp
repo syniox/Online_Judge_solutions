@@ -2,7 +2,7 @@
 #include<cstdio>
 #include<cstring>
 const int N=19;
-int n,m,top,oput_stk[N],dis_mid[N][N],dis[N][N],dp[N][1<<18],pre[N][1<<18];
+int n,m,top,oput_stk[N*3],dis_mid[N][N],dis[N][N],dp[N][1<<18],pre[N][1<<18];
 
 template <class T> inline void apn(T &x,const T y){
 	if(x>y) x=y;
@@ -33,32 +33,29 @@ inline void floyd(){
 
 void get_route(int x,int y){
 	const int mid=dis_mid[x][y];
-	if(!mid){
-		if(x!=y) oput_stk[++top]=y;
-		oput_stk[++top]=x;
-		return;
+	if(mid){
+		get_route(mid,y);
+		oput_stk[++top]=mid;
+		get_route(x,mid);
 	}
-	if(y!=mid) get_route(mid,y);
-	--top;
-	if(x!=mid) get_route(x,mid);
 }
 
 inline void oput_route(int state){
-	int x,cur=1e8;
+	int x=0,cur=1e8;
 	for(int i=1;i<=n;++i){
 		if(cur>dp[i][state]){
 			cur=dp[i][state];
 			x=i;
 		}
 	}
-	while(x!=1){
+	while(x>0){
 		int f=pre[x][state];
+		oput_stk[++top]=x;
 		get_route(f,x);
-		--top;
 		state^=(1<<(x-1));
 		x=f;
 	}
-	printf("%d ",top);
+	printf("%d ",--top);
 	printf("1 ");
 	for(;top>0;--top){
 		printf("%d ",oput_stk[top]);
@@ -70,7 +67,7 @@ inline void oput(){
 	int ax=1,ay=1,ans=1e8;
 	for(int i=1;i<(1<<n);++i){
 		const int j=((1<<n)-1)^i;
-		const int tp=std::max(dp[0][j],dp[0][i]);
+		const int tp=std::max(dp[0][i],dp[0][j]);
 		if(tp<ans){
 			ax=i,ay=j;
 			ans=tp;
@@ -83,7 +80,7 @@ inline void oput(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("a.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
 	memset(dis,31,sizeof(dis));
 	memset(dp,31,sizeof(dp));
@@ -100,6 +97,7 @@ int main(){
 		dp[i][1<<(i-1)]=dis[1][i];
 		pre[i][1<<(i-1)]=1;
 	}
+	pre[1][1]=0;
 	for(int i=1;i<(1<<n);++i){
 		for(int j=1;j<=n;++j){
 			if(dp[j][i]>5e8) continue;
