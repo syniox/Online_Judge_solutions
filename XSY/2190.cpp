@@ -1,7 +1,7 @@
 #include<iostream>
 #include<cstdio>
 #include<cstring>
-const int N=1e5+2;
+const int N=2e5+2;
 int n,q,fir[N],dp[N<<1],len[N<<1],endl[N<<1],endp1[N<<1],endp2[N<<1];
 int sz[N],fa[N],son[N],dfn[N],idx[N],top[N],dep[N],e_to_f[N];
 struct edge{
@@ -52,6 +52,7 @@ void dfs2(const int x){
 	dfn[x]=++cnd;
 	idx[cnd]=x;
 	top[x]=son[fa[x]]==x?top[fa[x]]:x;
+	if(son[x]) dfs2(son[x]);
 	for(int i=fir[x];i;i=eg[i].nx){
 		const int y=eg[i].to;
 		if(!top[y]) dfs2(y);
@@ -60,10 +61,11 @@ void dfs2(const int x){
 
 //e: point to x
 void dfs_down(const int x,const int e){
+	endp1[e]=endp2[e]=endl[e]=x;
 	for(int i=fir[x];i;i=eg[i].nx){
 		if((i^1)==e) continue;
 		const int y=eg[i].to;
-		e_to_f[y]=i;
+		e_to_f[y]=i^1;
 		dep[y]=dep[x]+1;
 		dfs_down(y,i);
 		if(dp[e]<dp[i]){
@@ -78,15 +80,15 @@ void dfs_down(const int x,const int e){
 			endp2[e]=endl[i];
 		}
 		if(len[e]<len[i]+1){
-			len[e]=len[i];
+			len[e]=len[i]+1;
 			endl[e]=endl[i];
 		}
 	}
 }
 
 void dfs_up(const int x,const int e){
-	int cson,nln[3]={0},ndp[2]={0};
-	int frl[3],frd[2];
+	int cson=0,nln[3]={0},ndp[2]={0};
+	int frl[3]={0},frd[2]={0};
 	for(int i=fir[x];i;i=eg[i].nx){
 		++cson;
 		int tp=len[i]+1,pt=i;
@@ -100,22 +102,28 @@ void dfs_up(const int x,const int e){
 	for(int i=fir[x];i;i=eg[i].nx){
 		const int p=i^1;
 		if(p==e) continue;
-		const int fr_l=frl[len[p]==nln[0]];
-		len[p]=len[fr_l];
-		endl[p]=frl[fr_l];
-		const int fr_d=dp[dp[p]==ndp[0]];
+		const int fr_l=frl[len[i]+1==nln[0]];
+		len[p]=len[fr_l]+(fr_l!=0);
+		endl[p]=fr_l?endl[fr_l]:x;
+		const int fr_d=frd[dp[i]==ndp[0]];
 		dp[p]=dp[fr_d];
-		endp1[p]=endp1[fr_d];
-		endp2[p]=endp2[fr_d];
+		endp1[p]=fr_d?endp1[fr_d]:x;
+		endp2[p]=fr_d?endp2[fr_d]:x;
 		if(cson>2){
-			int tp=nln[0]+nln[1];
-			if(len[i]==nln[0]||len[i]==nln[1]) tp+=nln[2]-len[i];
+			int tp=nln[0]+nln[1],cur=len[i]+1;
+			if(cur==nln[0]||cur==nln[1]) tp+=nln[2]-cur;
 			if(tp>dp[p]){
 				dp[p]=tp;
-				endp1[p]=frl[tp==nln[0]];
-				endp2[p]=frl[1+((tp==nln[0])||(tp=nln[1]))];
+				endp1[p]=endl[frl[cur==nln[0]]];
+				endp2[p]=endl[frl[1+((cur==nln[0])||(cur=nln[1]))]];
 			}
 		}
+		else if(dp[p]<len[p]){
+			dp[p]=len[p];
+			endp1[p]=eg[p].to;
+			endp2[p]=endl[p];
+		}
+		dfs_up(eg[i].to,i);
 	}
 }
 
@@ -128,27 +136,28 @@ inline int get_lca(int x,int y){
 }
 
 inline int jmp(int x,int step){
-	while(dep[top[x]]-dep[x]>step){
-		step-=dep[top[x]]-dep[x]+1;
+	while(dep[x]-dep[top[x]]<step){
+		step-=dep[x]-dep[top[x]]+1;
 		x=fa[top[x]];
 	}
 	return idx[dfn[x]-step];
 }
 
 inline int get_dis(const int x,const int y){
+	if(!(x&&y)) return 0;
 	const int z=get_lca(x,y);
 	return dep[x]+dep[y]-(dep[z]<<1);
 }
 
 inline bool run_able(const int x,const int y,const int z,const int lx,const int ly){
 	const int dis=dep[x]+dep[y]-(dep[z]<<1);
-	const int cut=dep[z]-dep[y]>ly?e_to_f[jmp(y,ly)]:e_to_f[jmp(x,dis-ly-1)]^1;
+	if(dis<=ly) return 0;
+	const int cut=dep[y]-dep[z]>ly? e_to_f[jmp(y,ly)] : e_to_f[jmp(x,dis-ly-1)]^1;
 	return std::max(get_dis(endp1[cut],x),get_dis(endp2[cut],x))>=lx;
 }
 
 inline int solve(const int x,const int y,const int step){
 	int z=get_lca(x,y),dis=dep[x]+dep[y]-(dep[z]<<1);
-	if(dis<step) return step&1;
 	if((dis&1)^(step&1)) return step&1;
 	if(dis&1) return run_able(y,x,z,step>>1,(step+1)>>1)?1:2;
 	return run_able(x,y,z,(step+1)>>1,step>>1)?0:-1;
@@ -156,7 +165,7 @@ inline int solve(const int x,const int y,const int step){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
 	n=nxi(),q=nxi();
 	for(int i=1;i<n;++i){
@@ -167,6 +176,7 @@ int main(){
 	dfs1(1);
 	dfs2(1);
 	dfs_down(1,0);
+	dp[0]=len[0]=endl[0]=endp1[0]=endp2[0]=0;
 	dfs_up(1,0);
 	while(q--){
 		const int x=nxi(),y=nxi(),step=nxi();
