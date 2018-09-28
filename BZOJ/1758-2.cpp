@@ -2,13 +2,44 @@
 #include<cstdio>
 #include<algorithm>
 #include<cstring>
-#include<queue>
 const int N=1e5+2;
-const double eps=1e-5;
+const double eps=1e-4;
 int n,m,ql,qr,fir[N];
 struct edge{
 	int to,wi,nx;
 }eg[N<<1];
+struct deque{
+	int hd,tl,que[N];
+	deque(){
+		hd=tl=0;
+	}
+	inline void clear(){
+		hd=tl=0;
+	}
+	inline bool empty(){
+		return hd==tl;
+	}
+	inline int front(){
+		return que[(tl==0?N:tl)-1];
+	}
+	inline int back(){
+		return que[hd];
+	}
+	inline void push_front(const int v){
+		que[tl++]=v;
+		if(tl==N) tl=0;
+	}
+	inline void push_back(const int v){
+		if(--hd<0) hd=N-1;
+		que[hd]=v;
+	}
+	inline void pop_back(){
+		if(++hd==N) hd=0;
+	}
+	inline void pop_front(){
+		if(--tl<0) tl=N-1;
+	}
+};
 
 template <class T> inline void apx(T &x,const T y){
 	if(x<y) x=y;
@@ -20,11 +51,20 @@ inline void add_edge(const int a,const int b,const int v){
 	fir[a]=cnt;
 }
 
+inline char get_c(){
+	static char *h,*t,buf[50000];
+	if(h==t){
+		t=(h=buf)+fread(buf,1,50000,stdin);
+		if(h==t) return EOF;
+	}
+	return *h++;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
+	while((c=get_c())>'9'||c<'0');
+	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
 	return x;
 }
 
@@ -73,7 +113,7 @@ namespace S{
 		apx(ndp[dep[x]],now[x]);
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
-			if(y!=fa){
+			if(y!=fa&&!vis[y]){//
 				dep[y]=dep[x]+1;
 				now[y]=now[x]+eg[i].wi-tgt;
 				get_ndp(y,x);
@@ -81,11 +121,10 @@ namespace S{
 			}
 		}
 	}
-	inline int merge(const int ln){
-		static std::deque<int> dq;
-		while(!dq.empty()) dq.pop_back();
-		const int limit=ql-1;
-		for(int i=std::min(dp_len,qr-1);i>=limit;--i){
+	inline bool merge(const int ln){
+		static deque dq;
+		if(!dq.empty()) dq.clear();
+		for(int i=std::min(dp_len,qr-1);i>=ql;--i){
 			while(!dq.empty()&&dp[dq.front()]<dp[i]) dq.pop_front();
 			dq.push_front(i);
 		}
@@ -98,7 +137,7 @@ namespace S{
 				dq.push_front(cur);
 			}
 			if(!dq.empty()){
-				if(dp[dq.back()]+ndp[i]>-eps) return 1;
+				if(dp[dq.back()]+ndp[i]>eps) return 1;
 			}
 		}
 		for(int i=1;i<=ln;++i){
@@ -122,13 +161,14 @@ namespace S{
 				if(merge(xdep[y])) return 1;
 			}
 		}
-		for(int i=ql;i<=qr;++i){
+		const int limit=std::min(qr,dp_len);
+		for(int i=ql;i<=limit;++i){
 			if(dp[i]>-eps) return 1;
 		}
 		return 0;
 	}
 	void solve(const int x,const int ssz){
-		if(ssz<ql) return;
+		if(ssz<=ql) return;
 		S::ssz=ssz,S::xsz=1e8;
 		get_rt(x,0);
 		vis[rt]=1;
@@ -138,10 +178,10 @@ namespace S{
 			if(!vis[eg[i].to]) sque[++top]=eg[i].to;
 		}
 		if(top) std::sort(sque+1,sque+top,cmp_xdep);
-		double l=std::max((double)0,ans-1),r=1e5,mid;
+		double l=std::max((double)0,ans-1),r=1e6,mid;
 		while(r-l>eps){
 			memset(dp,-63,(xdep[rt]+1)<<3);
-			mid=(l+r)/2;
+			mid=(l*4+r)/5;
 			if(jdg(rt,mid)) l=mid;
 			else r=mid;
 		}
@@ -155,7 +195,7 @@ namespace S{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("d.in","r",stdin);
+//	freopen("d.in","r",stdin);
 #endif
 	n=nxi(),ql=nxi(),qr=nxi();
 	for(int i=1;i<n;++i){
