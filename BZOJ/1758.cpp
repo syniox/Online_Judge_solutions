@@ -9,6 +9,15 @@ template <class T> inline void apx(T &x,const T y){
 	if(x<y) x=y;
 }
 
+inline char get_c(){
+	static bool buf[20000],*h,*t;
+	if(h==t){
+		t=(h=buf)+fread(buf,1,2000,stdin);
+		if(h==t) return EOF;
+	}
+	return *h++;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
@@ -18,7 +27,8 @@ inline int nxi(){
 }
 
 namespace T{
-	int x,y,v;
+	int x,y;
+	double v;
 	double hx[N],tr[N<<1];
 
 	inline int indx(const int l,const int r){
@@ -63,14 +73,14 @@ namespace T{
 		upd(l,r);
 	}
 
-	inline void mod_t(const int x,const int v){
-		T::x=x,T::v=v;
+	inline void mod_t(const int x,const double v){
+		T::x=dfn[x],T::v=v;
 		hx[x]=v;
 		mod(1,n);
 	}
 
 	inline double ask_t(const int x,const int y){
-		if(x>y) return 0;
+		if(x>y) return -19260817;//-INF
 		T::x=x,T::y=y;
 		return ask(1,n);
 	}
@@ -116,7 +126,7 @@ namespace G{
 }
 
 namespace S{
-	double ans,tgt;
+	double tgt;
 
 	void get_rdis(const int x){
 		for(int i=G::fir[x];i;i=G::eg[i].nx){
@@ -128,37 +138,43 @@ namespace S{
 		}
 	}
 
-	inline void get_ans(const int x){
-		if(G::son[x]) get_ans(G::son[x]);
-		const int px=T::hx[x],len=G::xdep[x]-G::dep[x];
+	bool get_ans(const int x){
+		if(G::son[x]){
+			if(get_ans(G::son[x])) return 1;
+		}
+		const int len=G::xdep[x]-G::dep[x];
+		const double px=T::hx[x];
 		for(int i=G::fir[x];i;i=G::eg[i].nx){
 			const int y=G::eg[i].to;
 			if(y!=G::fa[x]&&y!=G::son[x]){
-				get_ans(y);
+				if(get_ans(y)) return 1;
 				for(int j=0;j<=G::xdep[y]-G::dep[y];++j){
 					const int cur=idx[dfn[y]+j];
 					if(ql-(j+1)>len) continue;
 					if(qr-(j+1)<0) break;
 					const int fl=dfn[x]+std::max(0,ql-(j+1));
 					const int fr=dfn[x]+std::min(len,qr-(j+1));
-					apx(ans,(T::ask_t(fl,fr)-px) + (T::hx[cur]-px));
+					if((T::ask_t(fl,fr)-px)+(T::hx[cur]-px)>eps) return 1;
 				}
 				for(int j=0;j<=G::xdep[y]-G::dep[y];++j){
 					const int cur=idx[dfn[y]+j];
 					const int lc=idx[dfn[x]+j+1];
-					if(T::hx[lc]<T::hx[cur]) T::mod_t(dfn[lc],T::hx[cur]);
+					if(T::hx[lc]<T::hx[cur]) T::mod_t(lc,T::hx[cur]);
 				}
 			}
 		}
+		if(ql>len) return 0;
+		const int fl=dfn[x]+ql;
+		const int fr=dfn[x]+std::min(len,qr);
+		if(T::ask_t(fl,fr)-px>eps) return 1;
+		return 0;
 	}
 
 	inline bool solve(const double tgt){
 		S::tgt=tgt;
-		ans=-19260817;
 		get_rdis(1);
 		T::build(1,n);
-		get_ans(1);
-		return ans>-eps;
+		return get_ans(1);
 	}
 }
 
@@ -174,7 +190,7 @@ inline double solve(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("a.in","r",stdin);
+//	freopen("d.in","r",stdin);
 #endif
 	n=nxi(),ql=nxi(),qr=nxi();
 	for(int i=1;i<n;++i){
