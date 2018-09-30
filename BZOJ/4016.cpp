@@ -10,7 +10,7 @@ int n,m,ql,fir[N];
 struct veg{
 	int to,wi;
 	bool operator < (const veg &b) const {
-		return to<b.to;
+		return to==b.to?wi<b.wi:to<b.to;
 	}
 };
 std::vector <veg> frm[N];
@@ -29,7 +29,7 @@ inline int nxi(){
 }
 
 namespace G{
-	int cnt,fir[N];
+	int cnt,fir[N],dis[N];
 	struct edge{
 		int to,wi,nx;
 	}eg[N<<2];
@@ -45,7 +45,6 @@ namespace G{
 	}
 	inline void dijkstra(){
 		static std::priority_queue <node> pq;
-		static int dis[N];
 		static bool vis[N];
 		memset(dis,31,sizeof(dis));
 		dis[1]=0;
@@ -56,7 +55,7 @@ namespace G{
 			if(vis[x.x]) continue;
 			vis[x.x]=1;
 			for(int i=fir[x.x];i;i=eg[i].nx){
-				const int y=eg[i].to,v=x.dis+eg[i].to;
+				const int y=eg[i].to,v=x.dis+eg[i].wi;
 				if(dis[y]>v){
 					dis[y]=v;
 					frm[y].clear();
@@ -102,8 +101,8 @@ namespace S{
 	lint cnt;
 	bool vis[N];
 
-	bool cmp_xdep(const int a,const int b){
-		return xdep[a]<xdep[b];
+	bool cmp_xdep(const veg &a,const veg &b){
+		return xdep[a.to]<xdep[b.to];
 	}
 
 	void get_rt(const int x,const int fa){
@@ -136,12 +135,12 @@ namespace S{
 	}
 
 	inline void merge(const int len){
-		const int limit=std::min(len,dp_len);
+		const int limit=std::min(len,ql-1);
 		for(int i=std::max(ql-dp_len,1);i<=limit;++i){
 			const int v=dp[ql-i]+ndp[i];
 			if(ans<v) ans=v,cnt=0;
 			if(ans==v){
-				cnt+=(lint)dp[ql-i]*ndp[i];
+				cnt+=(lint)cdp[ql-i]*cndp[i];
 			}
 		}
 		for(int i=1;i<=len;++i){
@@ -172,25 +171,26 @@ namespace S{
 	inline void calc(const int x){
 		memset(dp,0,(xdep[x]+1)<<2);
 		memset(cdp,0,(xdep[x]+1)<<2);
-		static int que[N];
+		static veg que[N];
 		int top=dp_len=0;
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
-			if(!vis[y]) que[++top]=y;
+			if(!vis[y]) que[++top]=(veg){y,eg[i].wi};
 		}
-		if(top) std::sort(que+1,que+top,cmp_xdep);
+		if(top) std::sort(que+1,que+top+1,cmp_xdep);
 		for(int i=1;i<=top;++i){
-			const int y=que[i];
+			const int y=que[i].to;
 			memset(ndp,0,(xdep[y]+1)<<2);
 			memset(cndp,0,(xdep[y]+1)<<2);
-			get_ndp(y,eg[i].wi);
+			get_ndp(y,que[i].wi);
 			merge(xdep[y]);
 		}
+		if(xdep[x]<ql) return;
 		if(dp[ql]>ans){
 			ans=dp[ql],cnt=0;
 		}
 		if(dp[ql]==ans){
-			ans+=cdp[ql];
+			cnt+=cdp[ql];
 		}
 	}
 
@@ -202,6 +202,7 @@ namespace S{
 		x=rt;
 		dep[x]=0;
 		get_util(x,0);
+		vis[x]=1;
 		calc(x);
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
@@ -214,7 +215,7 @@ namespace S{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+//	freopen("c.in","r",stdin);
 #endif
 	n=nxi(),m=nxi(),ql=nxi()-1;
 	for(int i=1;i<=m;++i){
