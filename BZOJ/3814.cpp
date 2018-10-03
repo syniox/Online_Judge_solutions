@@ -2,6 +2,7 @@
 #include<cstdio>
 #include<cstring>
 #include<map>
+#include<cassert>
 typedef long long lint;
 const int N=1002,M=7;
 const int mod=1e9+7;
@@ -10,6 +11,10 @@ int n,m,bar,dp[N][M][200],fdp[N][M][200];
 int cni,idx[N];
 bool mp[N][M];
 std::map <int,int> stt;
+
+template <class T> inline void twk(T &x){
+	if(x>=mod) x-=mod;
+}
 
 inline int nxi(){
 	int x=0;
@@ -35,8 +40,8 @@ inline void get_dp(int dp[N][M][200],const int step_i){
 	for(int i=st_i;i!=ed_i;i+=step_i){
 		for(int j=1;j<=cni;++j){
 			if((idx[j])>>(m<<1)&3) continue;
-			const int fr=stt[step_i>0?idx[j]<<1:idx[j]>>1];
-			dp[i][0][j]+=dp[i-step_i][m][fr];
+			const int to=get_stt(idx[j]<<2);
+			twk(dp[i][0][to]+=dp[i-step_i][m][j]);
 		}
 		for(int j=0;j<m;++j){
 			for(int k=1;k<=cni;++k){
@@ -45,29 +50,32 @@ inline void get_dp(int dp[N][M][200],const int step_i){
 				const int p1=cur>>(j<<1)&3,p2=cur>>((j+1)<<1)&3;
 				if((p1||p2)&&mp[i][j+1]) continue;
 				if(!p1&&!p2){
+					twk(dp[i][j+1][k]+=base);
+					if(mp[i][j+1]) continue;
 					const int to=cur|(1<<(j<<1))|(2<<((j+1)<<1));
-					dp[i][j+1][get_stt(to)]+=base;
+					twk(dp[i][j+1][get_stt(to)]+=base);
 				}
 				else if((p1>0)^(p2>0)){
-					dp[i][j+1][k]+=base;
-					const int removed=cur^(p1<<(j<<1))^(p2<<(j+1)<<1);
+					twk(dp[i][j+1][k]+=base);
+					const int removed=cur^(p1<<(j<<1))^(p2<<((j+1)<<1));
 					const int to=removed|(p1<<((j+1)<<1))|(p2<<(j<<1));
-					dp[i][j+1][get_stt(to)]+=base;
+					twk(dp[i][j+1][get_stt(to)]+=base);
 				}
 				else if(p1==p2){
-					const int step=p1==1?-1:1,end=p1==1?0:n+1;
-					int l,cnt=-1;
+					const int step=p1==1?1:-1,end=p1==1?m+1:0;
+					int l,cnt=-(p1!=1);
 					for(l=j+step;l!=end;l+=step){
-						const int now=cur>>(l<<1)&3;
+						const int now=(cur>>(l<<1))&3;
 						if(now==p1) --cnt;
 						if(now&&now!=p1&&++cnt>=0) break;
 					}
+					assert(l!=end);
 					const int to=cur^(p1<<(j<<1))^(p2<<((j+1)<<1))^(3<<(l<<1));
-					dp[i][j+1][get_stt(to)]+=base;
+					twk(dp[i][j+1][get_stt(to)]+=base);
 				}
 				else if(p2==1){
 					const int to=cur^(p1<<(j<<1))^(p2<<((j+1)<<1));
-					dp[i][j+1][get_stt(to)]+=base;
+					twk(dp[i][j+1][get_stt(to)]+=base);
 				}
 			}
 		}
@@ -79,7 +87,7 @@ inline int get_ans(const int x,const int y){
 	for(int i=1;i<=cni;++i){
 		if(!dp[x][m][i]) continue;
 		const int cur=idx[i];
-		if(!(cur>>(y<<1)&3)) continue;
+		if(!(cur>>((y-1)<<1)&3)||(cur>>(m<<1))) continue;
 		int lastr=0,tgt=0;
 		bool exist=0;
 		for(int j=0;j<m;++j){
@@ -95,14 +103,14 @@ inline int get_ans(const int x,const int y){
 				tgt|=(1+(j==lastr))<<(j<<1);
 			}
 		}
-		ans=(ans+dp[x][m][i]*(lint)fdp[x+1][m][tgt])%mod;
+		ans=(ans+dp[x][m][i]*(lint)fdp[x+1][m][get_stt(tgt)])%mod;
 	}
 	return ans;
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+//	freopen("a.in","r",stdin);
 #endif
 	n=nxi(),m=nxi(),bar=nxi();
 	for(int i=1;i<=bar;++i){
