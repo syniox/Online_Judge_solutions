@@ -46,7 +46,7 @@ namespace T{
 		apx(tr[k].xv,tr[tr[k].c[0]].xv);
 		apx(tr[k].xv,tr[tr[k].c[1]].xv);
 	}
-	inline void get_rev(const int k){
+	void get_rev(const int k){
 		if(!isrt(k)) get_rev(tr[k].f);
 		if(tr[k].rev){
 			tr[tr[k].c[0]].putrev();
@@ -62,7 +62,7 @@ namespace T{
 		if(!isrt(f)) tr[ff].c[side(f)]=k;
 		tr[f].f=k;
 		tr[f].c[sid]=p;
-		tr[p].f=f;
+		if(p) tr[p].f=f;
 		p=f;
 		upd(f);
 		upd(k);
@@ -71,7 +71,7 @@ namespace T{
 		get_rev(x);
 		while(!isrt(x)){
 			const int f=tr[x].f;
-			if(tr[f].f){
+			if(!isrt(f)){
 				rot(side(f)==side(x)?f:x);
 			}
 			rot(x);
@@ -81,12 +81,13 @@ namespace T{
 		for(int p=0;k;p=k,k=tr[k].f){
 			splay(k);
 			tr[k].c[1]=p;
+			upd(k);
 		}
 	}
 	inline void mrt(const int k){
 		acs(k);
 		splay(k);
-		tr[k].rev^=1;
+		tr[k].putrev();
 	}
 	inline void link(const int x,const int y){
 		mrt(x);
@@ -129,14 +130,16 @@ namespace B{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
-	int T=nxi();
-	while(T--){
+	int Tick=nxi();
+	while(Tick--){
+		memset(T::tr,0,sizeof(T::tr));
+		memset(B::tr,0,sizeof(B::tr));
 		n=nxi(),m=nxi(),q=nxi();
 		for(int i=1;i<=m;++i){
 			eg[i].x=nxi(),eg[i].y=nxi();
-			T::tr[i+N].v=i;
+			T::tr[i+N].v=T::tr[i+N].xv=i;
 		}
 		for(int i=1;i<=q;++i){
 			qry[i].id=i;
@@ -145,18 +148,16 @@ int main(){
 		std::sort(qry+1,qry+q+1);
 		for(int i=m,j=q;i&&j;--i){
 			const int x=eg[i].x,y=eg[i].y;
-			if(x==y);
-			else if(!T::same_rt(x,y)){
+			if(x!=y){
+				if(T::same_rt(x,y)){
+					const int lst=T::tr[y].xv;
+					T::cut(eg[lst].x,lst+N);
+					T::cut(lst+N,eg[lst].y);
+					B::mod(lst,-1);
+				}
 				T::link(x,i+N);
 				T::link(i+N,y);
 				B::mod(i,1);
-			}
-			else{
-				T::split(x,y);
-				const int lst=T::tr[y].xv;
-				T::cut(x,lst+N);
-				T::cut(lst+N,y);
-				B::mod(lst,-1);
 			}
 			for(;qry[j].l==i;--j){
 				ans[qry[j].id]=n-B::ask(qry[j].l,qry[j].r);
