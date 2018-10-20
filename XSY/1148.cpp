@@ -33,7 +33,7 @@ inline double crs(const double x1,const double y1,const double x2,const double y
 }
 
 inline double get_tan(const double x,const double y){
-	const double ans=abs(y)<eps?P/2:atan(x/y);
+	const double ans=fabs(y)<eps?P/2:atan(x/y);
 	return ans+(y>0||(y==0&&x>0)?0:P);
 }
 
@@ -46,18 +46,19 @@ inline bool jdg(const double aim){
 		const int x=pt[i].x,y=pt[i].y;
 		pt[i].p=get_tan(y,x)+get_cos(aim,sqrt(x*x+y*y));
 		if(pt[i].p>P*2) pt[i].p-=P*2;
+		if(pt[i].p<0) pt[i].p+=P*2;
 	}
 	std::sort(pt+1,pt+n+1);
-	for(int i=1,j=i;i<=n;++i){
+	for(int i=1,j=i+1;i<=n;++i){
 		const double x=pt[i].x,y=pt[i].y;
 		const double vx=aim*cos(pt[i].p)-x;
 		const double vy=aim*sin(pt[i].p)-y;
-		while(crs(vx,vy,pt[j+1].x-x,pt[j+1].y-y)<0){
+		while(crs(vx,vy,pt[j].x-x,pt[j].y-y)<1e-6){
 			if(++j>n) j-=n;
 			if(j==i) return 1;
 		}
-		jmp[0][i]=(j>=i?j:j+n)-i+1;
-		if(j==i) ++j;
+		jmp[0][i]=(j>=i?j:j+n)-i;
+		if(j==i+1&&(++j>n)) j-=n;
 	}
 	for(int i=1;i<16;++i){
 		for(int j=1;j<=n;++j){
@@ -71,7 +72,7 @@ inline bool jdg(const double aim){
 			if(m&(1<<j)){
 				ans+=jmp[j][p];
 				if(ans>=n) break;
-				p+=jmp[j][p]+1;
+				p+=jmp[j][p];
 				if(p>n) p-=n;
 			}
 		}
