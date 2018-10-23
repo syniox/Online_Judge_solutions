@@ -5,7 +5,7 @@
 #include<cmath>
 typedef long long lint;
 const int N=1e5+5;
-int n,qk,buk1[N];
+int n,qk,buk1[N<<1];
 struct data{
 	int l,r;
 	bool operator < (const data &b) const {
@@ -63,7 +63,7 @@ struct T{
 		int k=rt;
 		--rk;
 		while(tr[k].c[0]||tr[k].c[1]){
-			const int tp=tr[tr[k].c[0]].sz;
+			const int tp=tr[tr[k].c[0]].ssz;
 			if(tp<=rk&&tp+tr[k].sz>rk) break;
 			if(tp>rk) k=tr[k].c[0];
 			else{
@@ -127,6 +127,7 @@ struct T{
 
 inline lint get_ans(T &tr,const int rk_mid){
 	tr.find_rk(rk_mid);
+//	printf("%d ",tr.tr[tr.rt].v);
 	const int v=tr.tr[tr.rt].v;
 	const node &ls=tr.tr[tr.tr[tr.rt].c[0]];
 	const node &rs=tr.tr[tr.tr[tr.rt].c[1]];
@@ -134,30 +135,32 @@ inline lint get_ans(T &tr,const int rk_mid){
 }
 
 inline lint solve(){
-	lint ans=1e14;
+	lint ans=1e18;
 	for(int i=1;i<=n;++i){
 		tr_r.ins(dt[i].l);
 		tr_r.ins(dt[i].r);
 	}
-//	printf("rt:%d\n",tr_r.rt);
-//	for(int i=1;i<=tr_r.cnt;++i){
-//		const node &cur=tr_r.tr[i];
-//		printf("%d: v=%d f=%d sz=%d ssz=%d",i,cur.v,cur.f,cur.sz,cur.ssz);
-//		printf(" c={%d %d} s=%lld\n",cur.c[0],cur.c[1],cur.s);
-//	}
 	for(int i=1;i<n;++i){
 		tr_l.ins(dt[i].l);
 		tr_l.ins(dt[i].r);
 		tr_r.del(dt[i].l);
 		tr_r.del(dt[i].r);
+//		printf("rt:%d\n",tr_l.rt);
+//		for(int j=1;j<=tr_l.cnt;++j){
+//			const node &cur=tr_l.tr[j];
+//			printf("%d: v=%d f=%d sz=%d ssz=%d",j,cur.v,cur.f,cur.sz,cur.ssz);
+//			printf(" c={%d %d} s=%lld\n",cur.c[0],cur.c[1],cur.s);
+//		}
+//		printf("mid:");
 		apn(ans,get_ans(tr_l,i)+get_ans(tr_r,n-i));
+//		printf("ans%lld\n",ans);
 	}
-	return ans==1e14?0:ans;
+	return ans==1e18?0:ans;
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
 	qk=nxi(),n=nxi();
 	lint base=0;
