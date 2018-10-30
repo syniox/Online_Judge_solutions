@@ -6,7 +6,7 @@
 #include <list>
 typedef long long lint;
 const int N=3e5+5;
-int n,m,q,cnt_mp,des[N];
+int n,m,q,cnt_mp;
 std::map <int,int> mp[N];
 struct data{
 	int tick,ov[2],rv[2],sz[2];
@@ -23,18 +23,27 @@ template <class T> inline void apn(T &x,const T y){
 	if(x>y) x=y;
 }
 
+inline char get_c(){
+	static char *h,*t,buf[200000];
+	if(h==t){
+		t=(h=buf)+fread(buf,1,200000,stdin);
+		if(h==t) return EOF;
+	}
+	return *h++;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
-	while((c=getchar())<'0');
-	while(x=x*10-48+c,(c=getchar())>='0');
+	while((c=get_c())<'0'||c>'9');
+	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
 	return x;
 }
 
 inline void init(){
 	for(int i=1;i<N;++i){
-		dt[i].ov[0]=dt[i].ov[1]=(int)1e8;
-		dt[i].rv[0]=dt[i].rv[1]=(int)1e8;
+		dt[i].ov[0]=dt[i].ov[1]=(int)1e9;
+		dt[i].rv[0]=dt[i].rv[1]=(int)2e9;
 	}
 }
 
@@ -107,26 +116,28 @@ inline lint solve(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	//freopen("c.in","r",stdin);
 #endif
 	n=nxi(),q=nxi();
 	init();
-	for(int i=1;i<=q;++i){
-		des[i]=nxi();
-		if(i==1) continue;
-		int x=des[i-1],y=des[i],rev=0;
-		const int cur=get_mp(x,y,rev);
-		dt[cur].que[rev].push_back(++dt[cur].tick);
-		++dt[cur].sz[rev];
+	for(int i=1,lst=0;i<=q;++i){
+		const int x=nxi();
+		if(lst){
+			int rev=0;
+			const int cur=get_mp(lst,x,rev);
+			dt[cur].que[rev].push_back(++dt[cur].tick);
+			++dt[cur].sz[rev];
+		}
+		lst=x;
 	}
 	m=nxi();
 	for(int i=1;i<=m;++i){
 		int x=nxi(),y=nxi(),rev=0,val;
-		char type;
-		while((type=getchar())!='R'&&type!='O');
+		char f_type;
+		while((f_type=get_c())!='R'&&f_type!='O');
 		val=nxi();
 		const int cur=get_mp(x,y,rev);
-		if(type=='R') apn(dt[cur].rv[rev],val);
+		if(f_type=='R') apn(dt[cur].rv[rev],val);
 		else apn(dt[cur].ov[rev],val);
 	}
 	printf("%lld\n",solve());
