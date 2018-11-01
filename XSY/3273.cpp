@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cstring>
 const int N=1e5+2;
-int n,m,q,cnf,col[N<<1],bel[N<<1];
+int n,m,q,cnf,col[N],bel[N<<1];
 bool eve[N<<1];
 
 template <class T> inline void apn(T &x,const T y){
@@ -19,6 +19,7 @@ inline int nxi(){
 
 namespace G{
 	int cnt=1,fir[N],dfn[N],low[N];
+	bool vis[N<<1];
 	struct edge{
 		int fr,to,nx;
 	}eg[N<<1];
@@ -28,45 +29,42 @@ namespace G{
 		fir[a]=cnt;
 	}
 
-	void tarjan(const int x,const int e){
+	void tarjan(const int x){
 		static int cnd,top,stk[N<<1];
 		low[x]=dfn[x]=++cnd;
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
+			if(!vis[i]) stk[++top]=i;
 			if(dfn[y]){
-				if(e!=(i^1)){
-					apn(low[x],dfn[y]);
-					stk[++top]=i;
-				}
+				apn(low[x],dfn[y]);
 			}
 			else{
-				stk[++top]=i;
-				tarjan(y,i);
-			}
-			apn(low[x],low[y]);
-		}
-		if(low[x]==dfn[x]){
-			++cnf;
-			int j=-1;
-			while(top&&j!=e){
-				j=stk[top--];
-				bel[j]=bel[j^1]=cnf;
+				tarjan(y);
+				if(low[y]>=dfn[x]){
+					int j=0;
+					++cnf;
+					while(j!=i){
+						j=stk[top--];
+						bel[j]=bel[j^1]=cnf;
+						vis[j]=vis[j^1]=1;
+					}
+				}
+				else apn(low[x],low[y]);
 			}
 		}
 	}
 
-	bool paint(const int x,const int e){
+	void paint(const int x){
 		for(int i=fir[x];i;i=eg[i].nx){
-			if(bel[i]!=bel[e]) continue;
-			if(~col[i]){
-				if(col[i]==col[e]) return 0;
+			const int y=eg[i].to;
+			if(~col[y]){
+				if(col[y]==col[x]) eve[bel[i]]=1;
 			}
 			else{
-				col[i]=col[e]^1;
-				paint(eg[i].to,i);
+				col[y]=col[x]^1;
+				paint(y);
 			}
 		}
-		return 1;
 	}
 }
 
@@ -107,7 +105,7 @@ namespace T{
 			if(dis&(1<<i)) x=fa[i][x];
 		}
 		if(x==y) return x;
-		for(int i=17;i;--i){
+		for(int i=17;i>=0;--i){
 			if(fa[i][x]!=fa[i][y]){
 				x=fa[i][x];
 				y=fa[i][y];
@@ -119,7 +117,7 @@ namespace T{
 	inline bool get_exi(int x,int f){
 		bool res=0;
 		int dis=dep[x]-dep[f];
-		for(int i=17;i&&!res;--i){
+		for(int i=17;i>=0&&!res;--i){
 			if(dis&(1<<i)){
 				res|=exi[i][x];
 				x=fa[i][x];
@@ -131,7 +129,7 @@ namespace T{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
 	memset(col,-1,sizeof(col));
 	n=nxi(),m=nxi();
@@ -141,12 +139,10 @@ int main(){
 		G::add_edge(b,a);
 	}
 	for(int i=1;i<=n;++i){
-		if(!G::dfn[i]) G::tarjan(i,0);
+		if(!G::dfn[i]) G::tarjan(i);
 	}
-	for(int i=2;i<=G::cnt;++i){
-		if(bel[i]&&col[i]==-1){
-			if(!G::paint(G::eg[i].to,i)) eve[bel[i]]=1;
-		}
+	for(int i=1;i<=n;++i){
+		if(col[i]==-1) col[i]=0,G::paint(i);
 	}
 	for(int i=1;i<=n;++i){
 		if(!T::dep[i]) T::rt[i]=i,T::dfs(i);
@@ -168,7 +164,7 @@ int main(){
 			puts("No");continue;
 		}
 		const int z=T::lca(x,y);
-		if((T::dep[x]+T::dep[y]-(T::dep[z]>>1))&1) puts("Yes");
+		if((T::dep[x]+T::dep[y]-(T::dep[z]<<1))&1) puts("Yes");
 		else puts(T::get_exi(x,z)||T::get_exi(y,z)?"Yes":"No");
 	}
 	return 0;
