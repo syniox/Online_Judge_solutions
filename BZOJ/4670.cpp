@@ -94,18 +94,20 @@ namespace G{
 			if(!dfn[i]) tarjan(i);
 		}
 		for(int i=1;i<=n;++i){
-			if(bel[i]==bel[i+n]) return 0;
+			if(bel[i]==bel[i+n]){
+				return 0;
+			}
 		}
 		return 1;
 	}
 }
 
 inline int find_pos(const int ptb){
-	int l=1,r=ptb,mid;
+	int l=0,r=ptb,mid;
 	while(l!=r){
-		mid=(l+r+1)>>1;
-		if(G::jdg(mid,ptb)) l=mid;
-		else r=mid-1;
+		mid=(l+r)>>1;
+		if(G::jdg(mid,ptb)) r=mid;
+		else l=mid+1;
 	}
 	return l;
 }
@@ -114,14 +116,8 @@ inline int solve(){
 	int pta=find_pos(cnt_dt),ptb=cnt_dt;
 	int ans=dt[pta].v+dt[ptb].v;
 	for(ptb=cnt_dt-1;ptb;--ptb){
-		const int x=dt[ptb+1].x,y=dt[ptb+1].y;
-		const int rx=UFS::find_rt(x),ry=UFS::find_rt(y);
-		if(rx==ry) apn(pta,ptb);
-		else{
-			UFS::fa[rx]=ry;
-			pta=find_pos(ptb);
-			if(pta>ptb) break;
-		}
+		pta=find_pos(ptb);
+		if(pta==ptb) break;
 		apn(ans,dt[pta].v+dt[ptb].v);
 	}
 	return ans;
@@ -129,7 +125,7 @@ inline int solve(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+	freopen("d.in","r",stdin);
 #endif
 	while(~scanf("%d",&n)){
 		UFS::init();
