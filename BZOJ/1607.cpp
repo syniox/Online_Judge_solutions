@@ -24,41 +24,6 @@ inline void init(){
 	}
 }
 
-inline int jdg(const int x){
-	static int cnt[S],que[N];
-	int p=x,top=0,ans=0;
-	--buk[x];
-	for(int i=1;p>1&&i<=cnp;++i){
-		while(p%prm[i]==0){
-			++cnt[i];
-			p/=prm[i];
-		}
-	}
-	que[++top]=1;
-	ans+=buk[1];
-	if(p>1){
-		que[++top]=p;
-		ans+=buk[p];
-	}
-	for(int i=1;i<=cnp;++i){
-		const int limit=top;
-		for(int j=1;j<=limit;++j){
-			for(int k=1,w=prm[i];k<=cnt[i];++k,w*=prm[i]){
-				que[++top]=que[j]*w;
-				ans+=buk[que[top]];
-			}
-		}
-	}
-//	printf("frac: ");
-//	for(int i=1;i<=top;++i){
-//		printf("%d ",que[i]);
-//	}
-//	puts("");
-	memset(cnt,0,sizeof(cnt));
-	++buk[x];
-	return ans;
-}
-
 int main(){
 #ifndef ONLINE_JUDGE
 	freopen("a.in","r",stdin);
@@ -69,8 +34,14 @@ int main(){
 		hx[i]=nxi();
 		++buk[hx[i]];
 	}
+	for(int i=(N*10)>>1;i;--i){
+		if(!buk[i]) continue;
+		for(int j=i<<1;j<N*10;j+=i){
+			buk[j]+=buk[i];
+		}
+	}
 	for(int i=1;i<=n;++i){
-		printf("%d\n",jdg(hx[i]));
+		printf("%d\n",buk[hx[i]]-1);
 	}
 	return 0;
 }
