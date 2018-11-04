@@ -17,8 +17,7 @@ inline int nxi(){
 }
 
 namespace G{
-	int cnt,cnf,ans,fa[N],fir[N],ind[N],bel[N];
-	bool vis[N];
+	int cnt=1,cnf,ans,fir[N],ind[N],bel[N];
 	struct edge{
 		int to,nx;
 	}eg[N<<2];
@@ -28,28 +27,24 @@ namespace G{
 		fir[a]=cnt;
 	}
 
-	void tarjan(const int x){
+	void tarjan(const int x,const int fr){
 		static int top,cnd,stk[N],dfn[N],low[N];
 		dfn[x]=low[x]=++cnd;
-//		printf("dfn%d: %d\n",cnd,x);
 		stk[++top]=x;
 		for(int i=fir[x];i;i=eg[i].nx){
 			const int y=eg[i].to;
 			if(dfn[y]){
-				if(fa[x]!=y&&!vis[y]) apn(low[x],dfn[y]);
+				if(fr!=(i^1)) apn(low[x],dfn[y]);
 			}
 			else{
-				fa[y]=x;
-				tarjan(y);
+				tarjan(y,i);
 				apn(low[x],low[y]);
 			}
 		}
-//		printf("%d: dfn%d low%d\n",x,dfn[x],low[x]);
 		if(dfn[x]==low[x]){
 			++cnf;
 			for(int j=0;j!=x;){
 				j=stk[top--];
-				vis[j]=1;
 				bel[j]=cnf;
 			}
 		}
@@ -71,7 +66,7 @@ namespace G{
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("a.in","r",stdin);
+//	freopen("a.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
 	for(int i=1;i<=m;++i){
@@ -80,7 +75,7 @@ int main(){
 		G::add(y,x);
 	}
 	for(int i=1;i<=n;++i){
-		if(!G::bel[i]) G::tarjan(i);
+		if(!G::bel[i]) G::tarjan(i,0);
 	}
 	printf("%d\n",G::solve());
 	return 0;
