@@ -1,0 +1,179 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+typedef long long lint;
+const int N=1e5+5,Q=320;
+int n,cnp,hx[N],prm[Q];
+
+template <class T> inline void apx(T &x,const T y){
+	if(x<y) x=y;
+}
+
+int gcd(const int x,const int y){
+	return y?gcd(y,x%y):x;
+}
+
+inline int nxi(){
+	int x=0;
+	char c;
+	while((c=getchar())>'9'||c<'0');
+	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
+	return x;
+}
+
+inline void init(){
+	static bool npr[Q];
+	for(int i=2;i<Q;++i){
+		if(!npr[i]) prm[++cnp]=i;
+		for(int j=1;j<=cnp&&i*prm[j]<Q;++j){
+			npr[i*prm[j]]=1;
+			if(i%prm[j]==0) break;
+		}
+	}
+}
+
+inline int san(int x){
+	for(int i=1;i<=cnp;++i){
+		if(x%prm[i]==0){
+			while(x%prm[i]==0) x/=prm[i];
+			x*=prm[i];
+		}
+	}
+	return x;
+}
+
+namespace G{
+	int rt,ssz,cnt,top,fir[N],que[N],sz[N],buk[N],xsz[N];
+	lint ans;
+	bool vis[N],col[N];
+	struct edge{
+		int to,nx;
+	}eg[N<<1];
+
+	inline void add(const int a,const int b){
+		eg[++cnt]=(edge){b,fir[a]};
+		fir[a]=cnt;
+	}
+
+	inline void ins(const int x){
+		for(int j=top;j;--j){
+			que[++top]=que[j]*x;
+			col[top]=col[j]^1;
+		}
+	}
+
+	inline void split(int x){
+		que[top=1]=1;
+		col[1]=0;
+		for(int i=1;x>1&&i<=cnp;++i){
+			if(x%prm[i]==0) x/=prm[i],ins(prm[i]);
+		}
+		if(x>1) ins(x);
+	}
+
+	inline void build(const int x){
+		split(x);
+		for(int i=1;i<=top;++i) ++buk[que[i]];
+	}
+
+	inline void calc(const int x){
+		split(x);
+		for(int i=1;i<=top;++i){
+			ans+=col[i]?-buk[que[i]]:buk[que[i]];
+		}
+	}
+
+	inline void del(const int x){
+		split(x);
+		for(int i=1;i<=top;++i) buk[que[i]]=0;
+	}
+
+	void dfs_rt(const int x,const int f){
+		xsz[x]=0,sz[x]=1;
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(y!=f&&!vis[y]){
+				dfs_rt(y,x);
+				apx(xsz[x],sz[y]);
+				sz[x]+=sz[y];
+			}
+		}
+		apx(xsz[x],ssz-sz[x]);
+		if(xsz[x]<xsz[rt]) rt=x;
+	}
+
+	int get_rt(const int x,const int csz){
+		xsz[rt]=1e9;
+		rt=0,ssz=csz;
+		dfs_rt(x,0);
+		return rt;
+	}
+
+	void dfs_build(const int x,const int f,const int g){
+		sz[x]=1;
+		build(g);
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(y!=f&&!vis[y]){
+				dfs_build(y,x,gcd(g,hx[y]));
+				sz[x]+=sz[y];
+			}
+		}
+	}
+
+	void dfs_calc(const int x,const int f,const int g){
+		calc(g);
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(y!=f&&!vis[y]){
+				dfs_calc(y,x,gcd(g,hx[y]));
+				sz[x]+=sz[y];
+			}
+		}
+	}
+
+	void dfs_del(const int x,const int f,const int g){
+		del(g);
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(y!=f&&!vis[y]) dfs_del(y,x,gcd(g,hx[y]));
+		}
+	}
+
+	void solve(int x,const int csz){
+		x=get_rt(x,csz);
+		vis[x]=1;
+		build(hx[x]);
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(!vis[y]){
+				dfs_calc(y,x,gcd(hx[x],hx[y]));
+				dfs_build(y,x,gcd(hx[x],hx[y]));
+			}
+		}
+		dfs_del(x,0,hx[x]);
+		for(int i=fir[x];i;i=eg[i].nx){
+			const int y=eg[i].to;
+			if(!vis[y]) solve(y,sz[y]);
+		}
+	}
+}
+
+int main(){
+#ifndef ONLINE_JUDGE
+	freopen("d.in","r",stdin);
+#endif
+	init();
+	n=nxi();
+	for(int i=1;i<n;++i){
+		const int a=nxi(),b=nxi();
+		G::add(a,b);
+		G::add(b,a);
+	}
+	for(int i=1;i<=n;++i){
+		hx[i]=san(nxi());
+	}
+	G::solve(1,n);
+	printf("%lld\n",G::ans);
+	return 0;
+}
