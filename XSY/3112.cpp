@@ -16,6 +16,10 @@ bool a_cmp(const route &x,const route &y){
 	return x.a<y.a;
 }
 
+bool id_cmp(const route &x,const route &y){
+	return x.id<y.id;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
@@ -31,6 +35,9 @@ namespace B{
 	}
 	inline void mod(int x,const int v){
 		for(;x<=n;x+=x&-x) upd(x),tr[x]+=v;
+	}
+	inline void mod(const int x,const int y,const int v){
+		mod(x,v),mod(y+1,-v);
 	}
 	inline int ask(int x){
 		int ans=0;
@@ -92,25 +99,23 @@ inline void get_route(route ru[],const int limit,const bool f){
 		int a=nxi(),b=nxi(),v=nxi();
 		if(dfn[a]>dfn[b]) std::swap(a,b);
 		if(f&&dfn[a]+G::sz[a]>dfn[b]){
-			a=G::jump(b,G::dep[a]-G::dep[b]-1);
+			a=G::jump(b,G::dep[b]-G::dep[a]-1);
 		}
 		ru[i]=(route){a,b,v,i};
 	}
-	std::sort(ru+1,ru+m+1,f?w_cmp:a_cmp);
+	std::sort(ru+1,ru+limit+1,f?w_cmp:a_cmp);
 }
 
 inline void build(int &top,route que[],const int x1,const int x2,const int y1,const int y2){
 	if(x1>x2||y1>y2) return;
-	que[++top]=(route){x1,y1,1,0};
-	if(y2<n) que[++top]=(route){x1,y2+1,-1,0};
-	if(x2<n) que[++top]=(route){x2+1,y1,-1,0};
-	if(x2<n&&y2<n) que[++top]=(route){x2+1,y2+1,1,0};
+	que[++top]=(route){y1,y2,1,x1};
+	if(x2+1<=n) que[++top]=(route){y1,y2,-1,x2+1};
 }
 
 void solve(const int rl,const int rr,const int ql,const int qr){
 	static route tq[N],que[N<<2];
 	if(rl==rr){
-		for(int i=ql;i<=qr;++i) ans[qry[i].id]=rl;
+		for(int i=ql;i<=qr;++i) ans[qry[i].id]=rou[rl].w;
 		return;
 	}
 	const int mid=(rl+rr)>>1;
@@ -118,34 +123,35 @@ void solve(const int rl,const int rr,const int ql,const int qr){
 	++B::tick;
 	memcpy(tq+ql,qry+ql,(qr-ql+1)*sizeof(route));
 	std::sort(tq+ql,tq+qr+1,a_cmp);
-	for(int i=rl;i<=rr;++i){
+	for(int i=rl;i<=mid;++i){
 		using G::dfn;
 		const int a=rou[i].a,b=rou[i].b;
 		if(dfn[a]+G::sz[a]>dfn[b]){
 			build(top,que,1,dfn[a]-1,dfn[b],dfn[b]+G::sz[b]-1);
-			build(top,que,dfn[a]+1,n,dfn[b],dfn[b]+G::sz[b]-1);
+			build(top,que,dfn[a]+G::sz[a]+1,n,dfn[b],dfn[b]+G::sz[b]-1);
 		}
 		else{
 			build(top,que,dfn[a],dfn[a]+G::sz[a]-1,dfn[b],dfn[b]+G::sz[b]-1);
 		}
 	}
-	std::sort(que+1,que+top+1,a_cmp);
-	for(int i=1,j=1,k=ql;i<=n;++i){
-		for(;j<=top&&que[j].a<=i;++j){
-			B::mod(que[j].b,que[j].w);
+	std::sort(que+1,que+top+1,id_cmp);
+	for(int i=1,j=1,k=ql;i<=n&&k<=qr;++i){
+		for(;j<=top&&que[j].id<=i;++j){
+			B::mod(que[j].a,que[j].b,que[j].w);
 		}
 		for(;k<=qr&&tq[k].a==i;++k){
-			if(B::ask(tq[k].b)>=tq[k].w) qry[++ptl]=tq[k];
-			else qry[--ptr]=tq[k];
+			int tp=B::ask(tq[k].b);
+			if(tp>=tq[k].w) qry[++ptl]=tq[k];
+			else qry[--ptr]=tq[k],qry[ptr].w-=tp;
 		}
 	}
-	if(rl<=mid) solve(rl,mid,ql,ptl);
-	if(rr>mid) solve(mid+1,rr,ptr,qr);
+	if(rl<=mid&&ptl>=ql) solve(rl,mid,ql,ptl);
+	if(rr>mid&&ptr<=qr) solve(mid+1,rr,ptr,qr);
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-//	freopen("c.in","r",stdin);
+	freopen("c.in","r",stdin);
 #endif
 	n=nxi(),m=nxi(),q=nxi();
 	for(int i=1;i<n;++i){
@@ -158,7 +164,7 @@ int main(){
 	get_route(rou,m,1);
 	get_route(qry,q,0);
 	solve(1,m,1,q);
-	for(int i=1;i<=n;++i){
+	for(int i=1;i<=q;++i){
 		printf("%d\n",ans[i]);
 	}
 	return 0;
