@@ -20,11 +20,20 @@ bool id_cmp(const route &x,const route &y){
 	return x.id<y.id;
 }
 
+inline char get_c(){
+	static char *h,*t,buf[20000];
+	if(h==t){
+		t=(h=buf)+fread(buf,1,20000,stdin);
+		if(h==t) return EOF;
+	}
+	return *h++;
+}
+
 inline int nxi(){
 	int x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
+	while((c=get_c())>'9'||c<'0');
+	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
 	return x;
 }
 
@@ -87,7 +96,7 @@ namespace G{
 	inline int jump(int x,int step){
 		while(dep[x]-dep[top[x]]<step){
 			step-=dep[x]-dep[top[x]]+1;
-			x=fa[dep[x]];
+			x=fa[top[x]];
 		}
 		return idx[dfn[x]-step];
 	}
@@ -101,7 +110,8 @@ inline void get_route(route ru[],const int limit,const bool f){
 		if(f&&dfn[a]+G::sz[a]>dfn[b]){
 			a=G::jump(b,G::dep[b]-G::dep[a]-1);
 		}
-		ru[i]=(route){a,b,v,i};
+		if(f) ru[i]=(route){a,b,v,i};
+		else ru[i]=(route){dfn[a],dfn[b],v,i};
 	}
 	std::sort(ru+1,ru+limit+1,f?w_cmp:a_cmp);
 }
@@ -122,36 +132,37 @@ void solve(const int rl,const int rr,const int ql,const int qr){
 	int top=0,ptl=ql-1,ptr=qr+1;
 	++B::tick;
 	memcpy(tq+ql,qry+ql,(qr-ql+1)*sizeof(route));
-	std::sort(tq+ql,tq+qr+1,a_cmp);
 	for(int i=rl;i<=mid;++i){
 		using G::dfn;
 		const int a=rou[i].a,b=rou[i].b;
 		if(dfn[a]+G::sz[a]>dfn[b]){
 			build(top,que,1,dfn[a]-1,dfn[b],dfn[b]+G::sz[b]-1);
-			build(top,que,dfn[a]+G::sz[a]+1,n,dfn[b],dfn[b]+G::sz[b]-1);
+			build(top,que,dfn[b],dfn[b]+G::sz[b]-1,dfn[a]+G::sz[a],n);
 		}
 		else{
 			build(top,que,dfn[a],dfn[a]+G::sz[a]-1,dfn[b],dfn[b]+G::sz[b]-1);
 		}
 	}
+	que[++top]=(route){n+1,n+1,0,n+1};
 	std::sort(que+1,que+top+1,id_cmp);
-	for(int i=1,j=1,k=ql;i<=n&&k<=qr;++i){
-		for(;j<=top&&que[j].id<=i;++j){
-			B::mod(que[j].a,que[j].b,que[j].w);
-		}
-		for(;k<=qr&&tq[k].a==i;++k){
+	for(int i=1,k=ql;i<=top&&k<=qr;++i){
+		for(;k<=qr&&tq[k].a<que[i].id;++k){
 			int tp=B::ask(tq[k].b);
 			if(tp>=tq[k].w) qry[++ptl]=tq[k];
 			else qry[--ptr]=tq[k],qry[ptr].w-=tp;
 		}
+		B::mod(que[i].a,que[i].b,que[i].w);
 	}
 	if(rl<=mid&&ptl>=ql) solve(rl,mid,ql,ptl);
-	if(rr>mid&&ptr<=qr) solve(mid+1,rr,ptr,qr);
+	if(rr>mid&&ptr<=qr){
+		std::reverse(qry+ptr,qry+qr+1);
+		solve(mid+1,rr,ptr,qr);
+	}
 }
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("c.in","r",stdin);
+//	freopen("d.in","r",stdin);
 #endif
 	n=nxi(),m=nxi(),q=nxi();
 	for(int i=1;i<n;++i){
