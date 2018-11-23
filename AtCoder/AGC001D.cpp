@@ -2,7 +2,7 @@
 #include<cstdio>
 #include<cstring>
 const int N=1e5+2;
-int hx[N];
+int n,m,cnt1,hx[N];
 
 inline int nxi(){
 	int x=0;
@@ -14,21 +14,20 @@ inline int nxi(){
 
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("b.in","r",stdin);
+	//	freopen("d.in","r",stdin);
 #endif
-	int n=nxi(),m=nxi();
+	n=nxi(),m=nxi();
 	for(int i=1;i<=m;++i){
 		hx[i]=nxi();
+		cnt1+=hx[i]&1;
 	}
-	for(int i=2;i<=m;++i){
+	if(cnt1>2){
+		puts("Impossible");
+		return 0;
+	}
+	for(int i=2;i<m;++i){
 		if(hx[i]&1){
-			if(hx[1]&1){
-				if(hx[m]&1){
-					puts("Impossible");
-					return 0;
-				}
-				std::swap(hx[i],hx[m]);
-			}
+			if(hx[1]&1) std::swap(hx[i],hx[m]);
 			else std::swap(hx[1],hx[i]);
 		}
 	}
