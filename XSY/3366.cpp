@@ -11,9 +11,10 @@ int n,m,cnt_0,cnt_free,hx[M];
 inline int nxi(){
 	int x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
+	while(((c=getchar())>'9'||c<'0')&&c!='-');
+	bool f=c=='-'&&(c=getchar());
 	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
-	return x;
+	return f?-x:x;
 }
 
 inline int gcd(int x,int y){
@@ -42,10 +43,13 @@ namespace S{
 	class Dusieve{
 		protected:
 			int hx[N],mp[N];
-			bool vis[N];
+			bool vis[(int)1e3+5];
 			virtual int _g(int x)=0;
 			virtual int _prod(int x)=0;
 		public:
+			inline void clear(){
+				memset(vis,0,sizeof(vis));
+			}
 			inline int operator () (int x){
 				if(x<N) return hx[x];
 				const int dv=n/x;
@@ -69,7 +73,7 @@ namespace S{
 				hx[1]=1;
 				for(int i=2; i<N; ++i){
 					if(!npr[i]){
-						hx[1]=-1;
+						hx[i]=-1;
 						prm[++cnp]=i;
 					}
 					for(int j=1; j<=cnp&&i*prm[j]<N; ++j){
@@ -77,6 +81,7 @@ namespace S{
 						if(i%prm[j]==0) break;
 						hx[i*prm[j]]=-hx[i];
 					}
+					hx[i]+=hx[i-1];
 				}
 			}
 	}mu;
@@ -108,25 +113,26 @@ namespace P{
 		static int f[M];
 		memset(f,0,sizeof(f));
 		a=poly(n);
+		memset(a.hx,0,(n+1)<<2);
 		f[0]=1;
 		//mul poly:(1,px[i])
 		for(int i=0; i<=n; ++i){
 			for(int j=i+1; j; --j){
-				f[j]=(f[j-1]-(lint)f[j]*px[i])%mod;
-				if(f[j]<0) f[j]+=mod;
+				f[j]=(f[j-1]+(lint)f[j]*(mod-px[i]))%mod;
 			}
 			f[0]=(lint)f[0]*px[i]%mod;
 		}
 		for(int i=0; i<=n; ++i){
 			int base=1;
-			for(int j=1; j<=n; ++j){
+			for(int j=0; j<=n; ++j){
 				if(j==i) continue;
 				base=(lint)base*(px[i]+mod-px[j])%mod;
 			}
-			base=(qpow(base,mod-2)*py[i])%mod;
-			for(int rest=0,j=n; ~j; --j){
-				rest=((lint)rest*px[i]+f[j])%mod;
+			base=((lint)qpow(base,mod-2)*py[i])%mod;
+			int rest=1;
+			for(int j=n; ~j; --j){
 				a.hx[j]=(a.hx[j]+(lint)rest*base)%mod;
+				rest=((lint)rest*px[i]+f[j])%mod;
 			}
 		}
 	}
@@ -136,7 +142,7 @@ namespace P{
 		px[0]=py[0]=0;
 		for(int i=1; i<=cnt_free+1; ++i){
 			px[i]=i;
-			py[i]=py[i-1]+qpow(i,cnt_free);
+			py[i]=(py[i-1]+qpow(i,cnt_free))%mod;
 		}
 		lagrange(spow,cnt_free+1,px,py);
 	}
@@ -146,12 +152,12 @@ inline int solve(){
 	static int prm_buk[10+5],prm_ans[1<<10];
 	static bool prm_side[1<<10];
 	P::init();
+	S::mu.init();
 	int ans=0;
 	if(cnt_free+cnt_0==m){
-		S::mu.init();
 		for(int l=1,r; l<=n; l=r+1){
 			r=n/(n/l);
-			ans=(ans+(lint)(S::mu(r)-S::mu(l-1))*P::spow.ask(n/l))%mod;
+			ans=(ans+(S::mu(r)+mod-S::mu(l-1))*(lint)P::spow.ask(n/l))%mod;
 		}
 	}
 	else{
@@ -172,10 +178,10 @@ inline int solve(){
 			int lb=i&-i;
 			prm_ans[i]=(lint)prm_buk[hbit(lb)+1]*prm_ans[i^lb]%mod;
 			prm_side[i]=prm_side[i^lb]^1;
-			ans=(ans+(lint)S::mu(prm_ans[i])*P::spow.ask(n/prm_ans[i]))%mod;
+			ans=(ans+(prm_side[i]?-1:1)*P::spow.ask(n/prm_ans[i]))%mod;
 		}
 	}
-	return ans;
+	return ans<0?ans+mod:ans;
 }
 
 int main(){
