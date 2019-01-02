@@ -1,21 +1,19 @@
 #include <iostream>
-#include <fstream>
 #include <cstdio>
+#include <fstream>
 #include <cstring>
-#include <thread>
 #include <cmath>
-#include <unistd.h>
+#include <thread>
 const int N=28;
 int n,q,sampl_ans[50005];
-//smp->sample
-int cnt_ans,ans_img[50005];
+int ans_img[50005];
 
 template <class T> inline void apx(T &x,const T y){
 	if(x<y) x=y;
 }
 
 struct img{
-	double x[N][N];
+	float x[N][N];
 
 	img operator - (const img &b) const {
 		img c;
@@ -26,55 +24,36 @@ struct img{
 		}
 		return c;
 	}
-	void read(){
-		for(int i=0; i<N; ++i){
-			for(int j=0; j<N; ++j){
-				scanf("%lf",&x[i][j]);
-			}
-		}
-	}
-	void sanitize(){
-		double max_psnr=0;
-		for(int i=0; i<N; ++i){
-			for(int j=0; j<N; ++j){
-				apx(max_psnr,x[i][j]);
-			}
-		}
-		if(max_psnr<1e-8) return;
-		for(int i=0; i<N; ++i){
-			for(int j=0; j<N; ++j){
-				x[i][j]/=max_psnr;
-			}
-		}
-	}
-	double psnr(){
-		double _sum=0;
+	float psnr(){
+		float _sum=0;
 		for(int i=0; i<N; ++i){
 			for(int j=1; j<N; ++j){
 				_sum+=x[i][j];
 			}
 		}
-		double _mean=_sum/(N*N);
-		double _mse=0;
+		float _mean=_sum/(N*N);
+		float _mse=0;
 		for(int i=0; i<N; ++i){
 			for(int j=0; j<N; ++j){
 				_mse+=(x[i][j]-_mean)*(x[i][j]-_mean);
 			}
 		}
+		return 1/_mse;
+		/*
 		_mse=_mse/(N*N);
-	return 10*log10(1/_mse);
+		return 10*log10(1/_mse);
+		*/
 	}
-}org_img[50005],data_img[50005];
+}org_img[50005],data_img[10005];
 
 void build(const int idx,const int l,const int r){
 	for(int i=l; i<=r; ++i){
 		img cur_img=data_img[i];
-		cur_img.sanitize();
-		double max_psnr=-1;
+		float max_psnr=-1;
 		int ans=-1;
 		for(int j=1; j<=n; ++j){
 			img dif=cur_img-org_img[j];
-			double tp=dif.psnr();
+			float tp=dif.psnr();
 			if(tp>max_psnr){
 				ans=j,max_psnr=tp;
 			}
@@ -84,7 +63,6 @@ void build(const int idx,const int l,const int r){
 			std::cerr<<"thread "<<idx<<": "<<i<<" done.\n";
 		}
 	}
-	++cnt_ans;
 }
 
 int main(){
@@ -107,7 +85,6 @@ int main(){
 				nx_sampl>>org_img[i].x[j][k];
 			}
 		}
-		org_img[i].sanitize();
 		nx_ans>>sampl_ans[i];
 	}
 	for(int i=1; i<=q; ++i){
@@ -118,10 +95,9 @@ int main(){
 		}
 	}
 	std::thread t1(build,1,1,q>>1);
-	t1.detach();
 	std::thread t2(build,2,(q>>1)+1,q);
-	t2.detach();
-	while(cnt_ans!=2) sleep(1);
+	t1.join();
+	t2.join();
 	for(int i=1; i<=q; ++i){
 		printf("%d\n",ans_img[i]);
 	}
