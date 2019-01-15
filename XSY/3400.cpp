@@ -2,10 +2,9 @@
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
-#include <vector>
 const int N=1e5+5;
 const int S=320;
-int n,val[N],lis[N],invlis[N];
+int n,val[N];
 bool type;
 
 template <class T> inline void apn(T &x,const T y){
@@ -26,39 +25,6 @@ inline int nxi(){
 	return x;
 }
 
-inline void make_lis(int st,int ed,const int step,int lis[]){
-	static int buk[N];
-	int pt=lis[st]=1;
-	for(int i=st; i!=ed; i+=step){
-		int l=0,r=pt,mid;
-		while(l!=r){
-			mid=(l+r)>>1;
-			if(buk[mid]==val[i]||((buk[mid]<val[i])==(step<0))) r=mid;
-			else l=mid+1;
-		}
-		if(l==pt) buk[pt++]=val[i];
-		else buk[l]=val[i];
-		lis[i]=l;
-	}
-}
-
-inline void make_invlis(int st,int ed,const int step,int lis[]){
-	static int buk[N];
-	int pt=1;
-	buk[0]=1e9+5;
-	for(int i=st; i!=ed; i+=step){
-		int l=0,r=pt,mid;
-		while(l!=r){
-			mid=(l+r)>>1;
-			if(buk[mid]>val[i]) l=mid+1;
-			else r=mid;
-		}
-		if(l==pt) buk[pt++]=val[i];
-		else buk[l]=val[i];
-		lis[i]=l;
-	}
-}
-
 namespace D{
 	int pt,mp[N];
 	inline void ins(const int v){
@@ -74,13 +40,11 @@ namespace D{
 }
 
 namespace B{
-	int cnt_blk,idx[S][S+5],blkans[S][S];
-	std::vector <int> stt[S];//one less
+	int cnt_blk,idx[S][S+5],bans[S][N],vans[S][N];
+	int lis[N],invlis[N],buk[N];
 
-	inline void build(){
-		static int buk[N];
+	inline void build_idx(){
 		const int remain=(n-1)%S+1;
-		int pt_buk=0;
 		++cnt_blk;
 		for(int i=1,j=1; i<=n; ++i,++j){
 			if(j==S+1) j=1,++cnt_blk;
@@ -90,59 +54,103 @@ namespace B{
 			std::sort(idx[i]+1,idx[i]+S+1,cmp_val);
 		}
 		std::sort(idx[cnt_blk]+1,idx[cnt_blk]+remain+1,cmp_val);
+	}
 
-		for(int i=1; i<=cnt_blk; ++i){
-			blkans[i][cnt_blk+1]=blkans[i-1][cnt_blk+1];
-			for(int j=i==S*i+(i==cnt_blk?remain:S); j>S*i; --j){
-				apx(blkans[i][cnt_blk+1],lis[j]);
-				apx(pt_buk,lis[j]);
-				apn(buk[lis[j]],val[j]);
+	inline void build_lis(){
+		int pt_buk;
+		pt_buk=1;
+		for(int i=1; i<=n; ++i){
+			int l=1,r=pt_buk,mid;
+			while(l!=r){
+				mid=(l+r)>>1;
+				if(buk[mid]<val[i]) l=mid+1;
+				else r=mid;
 			}
-			int ans=blkans[i][cnt_blk+1];
-			for(int j=1; j<=pt_buk; ++j){
-				stt[i].push_back(buk[j]);
+			buk[l]=val[i];
+			lis[i]=l;
+			if(l==pt_buk) ++pt_buk;
+		}
+		pt_buk=1;
+		for(int i=n; i; --i){
+			int l=1,r=pt_buk,mid;
+			while(l!=r){
+				mid=(l+r)>>1;
+				if(buk[mid]>val[i]) l=mid+1;
+				else r=mid;
 			}
-			for(int j=n; j>=S*i; --j){
-				if(j%S==0){
-					blkans[i][j/S+1]=ans;
-				}
-				int l=1,r=pt_buk,mid;
+			buk[l]=val[i];
+			invlis[i]=l;
+			if(l==pt_buk) ++pt_buk;
+		}
+	}
+
+	inline void build_ans(){
+		int pt_buk;
+		pt_buk=1;
+		for(int i=1; i<=n; ++i){
+			apx(pt_buk,lis[i]+1);
+			buk[lis[i]]=val[i];
+			if(i%S) continue;
+
+			const int blk=i/S;
+			bans[blk][n+1]=pt_buk-1;
+			for(int j=n; j>i; --j){
+				int l=0,r=pt_buk-1,mid;
 				while(l!=r){
-					mid=(l+r)>>1;
-					if(buk[mid]>val[j]) r=mid;
-					else l=mid+1;
+					mid=(l+r+1)>>1;
+					if(buk[mid]<val[j]) l=mid;
+					else r=mid-1;
 				}
-				apx(ans,l-1+invlis[j]);
+				bans[blk][j]=std::max(bans[blk][j+1],invlis[j]+l);
+			}
+		}
+
+		pt_buk=1;
+		for(int i=n; i; --i){
+			apx(pt_buk,invlis[i]+1);
+			buk[invlis[i]]=val[i];
+			if(i%S!=1) continue;
+
+			const int blk=i/S+1;
+			vans[blk][0]=pt_buk-1;
+			for(int j=1; j<i; ++j){
+				int l=0,r=pt_buk-1,mid;
+				while(l!=r){
+					mid=(l+r+1)>>1;
+					if(buk[mid]>val[j]) l=mid;
+					else r=mid-1;
+				}
+				vans[blk][j]=std::max(vans[blk][j-1],lis[j]+l);
 			}
 		}
 	}
 
 	inline int solve(const int l,const int r){
 		static bool mark_l[N],mark_r[N];
-		//need tweak
-		//fixed once
 		const int bel_l=(l-1)/S+1,bel_r=(r-1)/S+1;
 		const int lim_l=bel_l==cnt_blk?(n-1)%S+1:S;
 		const int lim_r=bel_r==cnt_blk?(n-1)%S+1:S;
-		int ans=blkans[bel_l-1][bel_r+1];
-		int pt_l=(bel_l-1)*S+1,pt_r=(bel_r-1)*S+lim_r;
+		const int pt_l=(bel_l-1)*S+1;
+		const int pt_r=(bel_r-1)*S+lim_r;
+		int ans=std::max(bans[bel_l-1][r],vans[bel_r+1][l]);
 
-		for(int i=r; i<=pt_r; ++i){
-			mark_r[i]=1;
-			int pos=std::upper_bound(stt[bel_l-1].begin(),stt[bel_l-1].end(),val[i])-stt[bel_l-1].begin();
-			apx(ans,invlis[i]+pos);
-		}
 		for(int i=pt_l; i<=l; ++i){
 			mark_l[i]=1;
+			apx(ans,lis[i]);
 		}
-		for(int i=1,j=1; i<=lim_l&&j<=lim_r; ++j){
+		for(int i=r; i<=pt_r; ++i){
+			mark_r[i]=1;
+			apx(ans,invlis[i]);
+		}
+		for(int i=1,j=1,res=0; j<=lim_r; ++j){
 			const int x=idx[bel_r][j];
 			if(!mark_r[x]) continue;
-			for(; i<=lim_l&&(!mark_l[idx[bel_l][i]]||val[idx[bel_l][i]]<val[x]); ++i){
+			for(; i<=lim_l&&(val[idx[bel_l][i]]<val[x]||!mark_l[idx[bel_l][i]]); ++i){
 				if(mark_l[idx[bel_l][i]]){
-					apx(ans,lis[idx[bel_l][i]]+invlis[x]);
+					apx(res,lis[idx[bel_l][i]]);
 				}
 			}
+			apx(ans,res+invlis[x]);
 		}
 		for(int i=r; i<=pt_r; ++i) mark_r[i]=0;
 		for(int i=pt_l; i<=l; ++i) mark_l[i]=0;
@@ -160,10 +168,9 @@ int main(){
 	for(int i=1; i<=n; ++i){
 		val[i]=D::ask(val[i]);
 	}
-	//undone?
-	make_lis(1,n+1,1,lis);
-	make_invlis(n,0,-1,invlis);
-	B::build();
+	B::build_idx();
+	B::build_lis();
+	B::build_ans();
 	for(int ans=0,q=nxi(); q; --q){
 		int l=nxi(),r=nxi();
 		if(type) l^=ans,r^=ans;
