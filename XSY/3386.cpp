@@ -43,37 +43,26 @@ namespace S{
 		if(len[4]) x=buk[4][len[4]--];
 		else x=buk[3][len[3]--];
 		l=val[x];
-		if(len[1]>=l){
-			for(int i=0; i<l; ++i){
-				ans[0][i]=x;
-				ans[1][i]=buk[1][len[1]];
-				ans[2][i]=buk[1][len[1]--];
-			}
-			pt+=l;
+		const int limit_0=std::min(len[0],(l-3)>>1);
+		const int limit_1=l-3-(limit_0<<1);
+		const int end=(l-1+limit_1)>>1;
+		const int turn=l-1-end;
+		
+		for(int i=0; i<end; ++i){
+			ans[0][pt+i]=x;
 		}
-		else{
-			int turn=(l-1-len[1])>>1;
-			bool f=(l-1-len[1])&1;
-			for(int i=0; i<l-turn-1; ++i){
-				ans[0][pt+i]=x;
-			}
-			for(int i=0; i<turn; ++i){
-				ans[2][pt+i]=x;
-			}
-			if(f){
-				ans[2][pt+turn]=buk[0][len[0]--];
-			}
-			for(int i=0; i<len[1]; ++i){
-				ans[1][pt+turn+i+f]=buk[1][i+1];
-				ans[2][pt+turn+i+f]=buk[1][i+1];
-			}
-			ans[1][pt]=x;
-			for(int i=1; i<turn+f; ++i){
-				ans[1][pt+i]=buk[0][len[0]--];
-			}
-			len[1]=0;
-			pt+=l-turn-1;
+		ans[1][pt]=x;
+		for(int i=1; i<=limit_0; ++i){
+			ans[1][pt+i]=buk[0][len[0]--];
 		}
+		for(int i=0; i<turn; ++i){
+			ans[2][pt+i]=x;
+		}
+		for(int i=turn; i<end; ++i){
+			ans[1][pt+i]=buk[1][len[1]];
+			ans[2][pt+i]=buk[1][len[1]--];
+		}
+		pt+=end;
 	}
 
 	inline void build_11(int &pt){
