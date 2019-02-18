@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 const int N=9;
+const int S=3;
 int cbit[1<<N];
 
 inline int nxi(){
@@ -19,23 +20,31 @@ inline void init(){
 }
 
 namespace G{
-	int mp[N][N];
+	int mp[N][N],bel[N][N];
 	int vld_row[N],vld_col[N],vld_sqr[N];
 	//actually used
 
-	inline void init(){
+	inline int get_sqr(int x,int y){
+		return x/S*S+y/S;
+	}
+
+	inline void clear(){
 		memset(mp,0,sizeof(mp));
 		memset(vld_row,0,sizeof(vld_row));
 		memset(vld_col,0,sizeof(vld_col));
 		memset(vld_sqr,0,sizeof(vld_sqr));
 	}
 
-	inline int get_sqr(int x,int y){
-		return x/3*3+y/3;
+	inline void init(){
+		for(int i=0; i<N; ++i){
+			for(int j=0; j<N; ++j){
+				bel[i][j]=get_sqr(i,j);
+			}
+		}
 	}
 
 	inline int get_vld(const int x,const int y){
-		return vld_row[x]|vld_col[y]|vld_sqr[get_sqr(x,y)];
+		return vld_row[x]|vld_col[y]|vld_sqr[bel[x][y]];
 	}
 
 	inline void fill(int x,int y,int v){
@@ -43,7 +52,7 @@ namespace G{
 		mp[x][y]^=v;
 		vld_row[x]^=1<<(v-1);
 		vld_col[y]^=1<<(v-1);
-		vld_sqr[get_sqr(x,y)]^=1<<(v-1);
+		vld_sqr[bel[x][y]]^=1<<(v-1);
 	}
 
 	bool dfs(){
@@ -80,10 +89,11 @@ namespace G{
 int main(){
 	static char ch[N*N];
 	init();
+	G::init();
 	for(;;){
 		scanf("%s",ch);
 		if(ch[0]=='e') break;
-		G::init();
+		G::clear();
 		for(int i=0,cnt=0; i<N; ++i){
 			using namespace G;
 			for(int j=0; j<N; ++j,++cnt){
