@@ -14,7 +14,7 @@ inline int nxi(){
 }
 
 inline void init(){
-	for(int i=1; i<1<<9; ++i){
+	for(int i=1; i<1<<N; ++i){
 		cbit[i]=cbit[i>>1]+(i&1);
 	}
 }
@@ -56,15 +56,27 @@ namespace G{
 	}
 
 	bool dfs(){
+		int prow[N],pcol[N];
+		memset(prow,0,sizeof(prow));
+		memset(pcol,0,sizeof(pcol));
 		int bx=0,by=0,st=0;
 		for(int i=0; i<N; ++i){
 			for(int j=0; j<N; ++j){
-				if(mp[i][j]) continue;
+				if(mp[i][j]){
+					prow[i]|=1<<(mp[i][j]-1);
+					pcol[j]|=1<<(mp[i][j]-1);
+					continue;
+				}
 				int tmp=get_vld(i,j);
 				if(cbit[st]<cbit[tmp]){
 					bx=i,by=j,st=tmp;
 				}
+				prow[i]|=((1<<N)-1)^tmp;
+				pcol[j]|=((1<<N)-1)^tmp;
 			}
+		}
+		for(int i=0; i<N; ++i){
+			if(prow[i]!=(1<<N)-1||pcol[i]!=(1<<N)-1) return 0;
 		}
 		if(mp[bx][by]){
 			for(int i=0; i<N; ++i){
@@ -75,7 +87,7 @@ namespace G{
 			puts("");
 			return 1;
 		}
-		for(int i=1; i<=9; ++i){
+		for(int i=1; i<=N; ++i){
 			if(!((st>>(i-1))&1)){
 				fill(bx,by,i);
 				if(dfs()) return 1;
