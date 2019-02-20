@@ -3,7 +3,7 @@
 #include <cstring>
 const int N=9;
 const int S=3;
-int cbit[1<<N];
+int cbit[1<<N],fpos[1<<N];
 
 inline int nxi(){
 	int x=0;
@@ -16,6 +16,9 @@ inline int nxi(){
 inline void init(){
 	for(int i=1; i<1<<N; ++i){
 		cbit[i]=cbit[i>>1]+(i&1);
+	}
+	for(int i=0; i<N; ++i){
+		fpos[((1<<N)-1)^(1<<i)]=i;
 	}
 }
 
@@ -55,29 +58,87 @@ namespace G{
 		vld_sqr[bel[x][y]]^=1<<(v-1);
 	}
 
+	inline void reset(int bak_mp[N][N],int bak_row[N],int bak_col[N],int bak_sqr[N]){
+		memcpy(mp,bak_mp,sizeof(mp));
+		memcpy(vld_row,bak_row,sizeof(vld_row));
+		memcpy(vld_col,bak_col,sizeof(vld_col));
+		memcpy(vld_sqr,bak_sqr,sizeof(vld_sqr));
+	}
+
+	inline bool sanitize_rc(){
+		int st[N];
+		for(int i=0; i<N; ++i){
+			memset(st,0,sizeof(st));
+			for(int j=0; j<N; ++j){
+				if(mp[i][j]) continue;
+				int tmp=((1<<N)-1)^get_vld(i,j);
+				for(int k=0; k<N; ++k){
+					if(tmp>>k&1) st[k]|=1<<j;
+				}
+			}
+			for(int j=0; j<N; ++j){
+				if(vld_row[i]>>j&1) continue;
+				if(cbit[st[j]]==0) return 0;
+				if(cbit[st[j]]==1){
+					int pos=fpos[((1<<N)-1)^st[j]];
+					fill(i,pos,j+1);
+				}
+			}
+		}
+
+		for(int i=0; i<N; ++i){
+			memset(st,0,sizeof(st));
+			for(int j=0; j<N; ++j){
+				if(mp[j][i]) continue;
+				int tmp=((1<<N)-1)^get_vld(j,i);
+				for(int k=0; k<N; ++k){
+					if(tmp>>k&1) st[k]|=1<<j;
+				}
+			}
+			for(int j=0; j<N; ++j){
+				if(vld_col[i]>>j&1) continue;
+				if(cbit[st[j]]==0) return 0;
+				if(cbit[st[j]]==1){
+					int pos=fpos[((1<<N)-1)^st[j]];
+					fill(pos,i,j+1);
+				}
+			}
+		}
+		return 1;
+	}
+
 	bool dfs(){
-		int prow[N],pcol[N];
-		memset(prow,0,sizeof(prow));
-		memset(pcol,0,sizeof(pcol));
+		int bak_mp[N][N],bak_row[N],bak_col[N],bak_sqr[N];
+		memcpy(bak_mp,mp,sizeof(bak_mp));
+		memcpy(bak_row,vld_row,sizeof(bak_row));
+		memcpy(bak_col,vld_col,sizeof(bak_col));
+		memcpy(bak_sqr,vld_sqr,sizeof(bak_sqr));
+
+		for(int i=0; i<N; ++i){
+			for(int j=0; j<N; ++j){
+				if(mp[i][j]) continue;
+				int tmp=get_vld(i,j);
+				if(cbit[tmp]!=N-1) continue;
+				fill(i,j,fpos[tmp]+1);
+			}
+		}
+
+		if(!sanitize_rc()){
+			reset(bak_mp,bak_row,bak_col,bak_sqr);
+			return 0;
+		}
+
 		int bx=0,by=0,st=0;
 		for(int i=0; i<N; ++i){
 			for(int j=0; j<N; ++j){
-				if(mp[i][j]){
-					prow[i]|=1<<(mp[i][j]-1);
-					pcol[j]|=1<<(mp[i][j]-1);
-					continue;
-				}
+				if(mp[i][j]) continue;
 				int tmp=get_vld(i,j);
 				if(cbit[st]<cbit[tmp]){
 					bx=i,by=j,st=tmp;
 				}
-				prow[i]|=((1<<N)-1)^tmp;
-				pcol[j]|=((1<<N)-1)^tmp;
 			}
 		}
-		for(int i=0; i<N; ++i){
-			if(prow[i]!=(1<<N)-1||pcol[i]!=(1<<N)-1) return 0;
-		}
+
 		if(mp[bx][by]){
 			for(int i=0; i<N; ++i){
 				for(int j=0; j<N; ++j){
@@ -94,6 +155,7 @@ namespace G{
 				fill(bx,by,i);
 			}
 		}
+		reset(bak_mp,bak_row,bak_col,bak_sqr);
 		return 0;
 	}
 }
