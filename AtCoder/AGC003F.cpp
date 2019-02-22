@@ -41,7 +41,7 @@ inline void mtrx::reset(){
 	for(int i=0; i<3; ++i) n[i][i]=1;
 }
 
-inline int fpow(int x,int t){
+template <class T> inline int fpow(int x,T t){
 	int ans=1;
 	for(; t; x=(lint)x*x%mod,t>>=1){
 		if(t&1) ans=(lint)ans*x%mod;
@@ -74,19 +74,20 @@ inline int solve(){
 	ans.reset();
 	t.n[0][0]=t.n[1][1]=cnt_v;
 	t.n[2][1]=1;
-	t.n[2][2]=cnt_col;
+	t.n[2][2]=con_col;
 	for(q-=1; q; q>>=1,t=t*t){
 		if(q&1) ans=ans*t;
 	}
 	const int V=(lint)ans.n[0][0]*cnt_v%mod;
-	const int E=((lint)ans.n[1][1]*(cnt_col+cnt_row)+(lint)con_col*ans.n[2][1])%mod;
+	const int E=((lint)ans.n[1][1]*(cnt_v-1)+(lint)cnt_col*ans.n[2][1])%mod;
 	return (V+mod-E)%mod;
 }
 
 int main(){
-	static char ch[3][N];
+	//static char ch[3][N];
+	static char ch[N][N];
 	h=nxi<int>(),w=nxi<int>(),q=nxi<lint>();
-	if(q==1){
+	if(q<=1){
 		puts("1");
 		return 0;
 	}
@@ -94,8 +95,8 @@ int main(){
 	for(int i=1; i<w; ++i){
 		if(ch[2][i]=='#') ++cnt_v;
 		if(ch[2][i]=='#'&&ch[2][i+1]=='#') ++cnt_row;
-		con_row+=ch[2][1]=='#'&&ch[2][w]=='#';
 	}
+	con_row+=ch[2][1]=='#'&&ch[2][w]=='#';
 	if(ch[2][w]=='#') ++cnt_v;
 	if(h>1){
 		scanf("%s",ch[0]+1);
@@ -107,11 +108,18 @@ int main(){
 		cal_row(ch[i&1]);
 		cal_col(ch[i&1],ch[(i&1)^1]);
 	}
-	for(int i=1; i<=w; ++i){
-		con_col+=ch[2][i]=='#'&&ch[h&1][i]=='#';
+	if(h>1){
+		for(int i=1; i<=w; ++i){
+			con_col+=ch[2][i]=='#'&&ch[h&1][i]=='#';
+		}
+	}
+	else{
+		for(int i=1; i<=w; ++i){
+			con_col+=ch[2][i]=='#';
+		}
 	}
 	if((con_col==0)==(con_row==0)){
-		printf("%d\n",con_col?1:fpow(cnt_v,q));
+		printf("%d\n",con_col?1:fpow(cnt_v,std::max(0ll,q-1)));
 		return 0;
 	}
 	printf("%d\n",solve());
