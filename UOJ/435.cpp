@@ -2,35 +2,32 @@
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
-#include <cassert>
+#include <cmath>
 const int N=1e5+5;
-const int S=320;
 int n,q;
 int val[N],bel[N];//dfn
 int dfn[N],idx[N];
 bool type;
 
-
-inline char get_c(){
-	static char *h,*t,buf[20000];
-	if(h==t){
-		t=(h=buf)+fread(buf,1,20000,stdin);
-		if(h==t) return EOF;
-	}
-	return *h++;
-}
-
 inline int nxi(){
 	int x=0;
 	char c;
-	while(((c=get_c())>'9'||c<'0')&&c!='-');
-	const bool f=c=='-'&&(c=get_c());
-	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
+	while(((c=getchar())>'9'||c<'0')&&c!='-');
+	const bool f=c=='-'&&(c=getchar());
+	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
 	return f?-x:x;
 }
 
 template <class T> inline void apx(T &x,const T y){
 	if(x<y) x=y;
+}
+
+inline int hbit(int x){
+	int ans=0;
+	for(int i=16; i; i>>=1){
+		if(x>>i) x>>=i,ans+=i;
+	}
+	return ans;
 }
 
 inline bool cmp_val(const int a,const int b){
@@ -54,16 +51,10 @@ namespace T{
 	}
 }
 
-int ask_cnt,mod_cnt;
-
 namespace B{
 	int tag[N];
 	int cnb,*blk[N],blk_l[N],blk_r[N],blk_sz[N];
 	int sum_blk[N];
-
-	inline bool positive(const int x){//dfn
-		return val[x]+tag[bel[x]]>0;
-	}
 
 	inline int ask_blk(const int p){
 		int l=0,r=blk_sz[p],mid;
@@ -100,13 +91,8 @@ namespace B{
 		build_blk(cnb);
 	}
 
-	inline void mod_blk(const int p,const int delta){
-		tag[p]+=delta;
-		upd_blk(p);
-	}
-
 	inline int ask(int l,int r){
-		assert(bel[l]==bel[r]);
+		//bel[l]==bel[r]
 		if(l>r) std::swap(l,r);
 		if(r-l+1==blk_sz[bel[l]]) return sum_blk[bel[l]];
 		int ans=0;
@@ -117,12 +103,13 @@ namespace B{
 	}
 
 	inline void mod(int l,int r,const int v){
+		//bel[l]==bel[r]
 		static int buk1[N],buk2[N];
-		assert(bel[l]==bel[r]);
 		if(l>r) std::swap(l,r);
 		const int p=bel[l];
 		if(r-l+1==blk_sz[p]){
-			mod_blk(bel[l],v);
+			tag[bel[l]]+=v;
+			upd_blk(bel[l]);
 			return;
 		}
 		int pt1=0,pt2=0,pt=0;
@@ -176,7 +163,7 @@ namespace G{
 		static int cnd;
 		dfn[x]=++cnd;
 		idx[cnd]=x;
-		top[x]=son[fa[x]]==x&&dep[x]-dep[top[fa[x]]]<S?top[fa[x]]:x;
+		top[x]=son[fa[x]]==x?top[fa[x]]:x;
 		bot[top[x]]=x;
 		if(son[x]) dfs_top(son[x]);
 		for(int i=fir[x]; i; i=eg[i].nx){
@@ -202,11 +189,32 @@ namespace G{
 		}
 	}
 
-	inline int get_lca(int x,int y){
-		while(top[x]!=top[y]){
-			dep[top[x]]>dep[top[y]]?x=fa[top[x]]:y=fa[top[y]];
+	inline void init_blk(){
+		static int tr_top[N];
+		memcpy(tr_top,top,(n+1)*sizeof(int));
+		for(int i=1; i<=n; ++i){
+			const int x=idx[i];
+			if(tr_top[x]!=x) continue;
+			int len=dep[bot[x]]-dep[top[x]]+1;
+			int blk_sz=sqrt(len*hbit(sqrt(len)));
+			for(int lst=i,j=i; j<i+len; ++j){
+				top[idx[j]]=idx[lst];
+				if(j-lst+1==blk_sz||j==i+len-1){
+					B::new_blk(lst,j);
+					bot[idx[lst]]=idx[j];
+					mx_blk[idx[lst]]=bel[lst];
+					lst=j+1;
+				}
+			}
 		}
-		return dep[x]<dep[y]?x:y;
+		for(int i=n; i; --i){
+			const int x=idx[i];
+			bot[x]=bot[top[x]];
+			for(int j=fir[x]; j; j=eg[j].nx){
+				const int y=eg[j].to;
+				if(y!=fa[x]) apx(mx_blk[x],mx_blk[y]);
+			}
+		}
 	}
 
 	inline void mod(int x,int y,int v){
@@ -258,7 +266,8 @@ int main(){
 	for(int i=1; i<=n; ++i){
 		val[dfn[i]]=nxi();
 	}
-	G::dfs_blk(1);
+	//G::dfs_blk(1);
+	G::init_blk();
 	for(int ans=0; q; --q){
 		using G::dep;
 		int op=nxi(),x,y,w;
