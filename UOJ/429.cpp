@@ -131,7 +131,7 @@ inline void get_tag(){
 				vt[pos_l+k+(i<<1)-1].push_back((data){0,i<<1,pos_r});
 			}
 			//ban node
-			for(int k=i; k<<1<=(pos_r-pos_l+1); ++k){
+			for(int k=i; k<<1<=(pos_r-pos_l+1); k+=i){
 				for(int l=(pos_l+k-1)/k; (l+1)*k<=pos_r; ++l){
 					ban[k][l]=1;
 				}
