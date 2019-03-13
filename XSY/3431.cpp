@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
-#include <cassert>
 typedef long long lint;
 const int N=205;
 const int mod=10007;
@@ -13,7 +12,7 @@ class mtrx{
 		int sz,n[305][305];
 		mtrx(int len=0){
 			sz=len;
-			memset(n,0,sizeof(sz));
+			memset(n,0,sizeof(n));
 		}
 		friend inline mtrx operator * (const mtrx &a,const mtrx &b);
 		inline void oput(){
@@ -39,17 +38,22 @@ inline int nxi(){
 }
 
 inline mtrx operator * (const mtrx &a,const mtrx &b){
-	assert(a.sz==b.sz);
+	static lint res[305][305];
 	mtrx c;
+	memset(res,0,sizeof(res));
 	memset(c.n,0,sizeof(c.n));
 	c.sz=a.sz;
 	for(int i=0; i<a.sz; ++i){
 		for(int j=i; j<a.sz; ++j){
-			lint tp=0;
-			for(int k=i; k<=j; ++k){
-				tp+=a.n[i][k]*b.n[k][j];
+			if(!a.n[i][j]) continue;
+			for(int k=j; k<a.sz; ++k){
+				res[i][k]+=a.n[i][j]*b.n[j][k];
 			}
-			c.n[i][j]=tp%mod;
+		}
+	}
+	for(int i=0; i<a.sz; ++i){
+		for(int j=0; j<a.sz; ++j){
+			c.n[i][j]=res[i][j]%mod;
 		}
 	}
 	return c;
@@ -59,10 +63,6 @@ namespace G{
 	int dp[N][N][N],res[N];
 	//dp[i][j]: 到i点经过j个(端点字符不同, 自环权24)的路径数
 	//res[i]: 经过i个type1点结束的总方案数
-	inline void clear(){
-		memset(dp,0,sizeof(dp));
-		memset(res,0,sizeof(res));
-	}
 
 	inline void build(){
 		//左边准备匹配第i位，右边准备匹配第j位
@@ -85,10 +85,13 @@ namespace G{
 	}
 
 	inline void get_res(bool flag){
+		//flag为1时记录最后一步经过[i,i+1](0<=i<len)的路径数(用于容斥)
+		//当总长为奇数时，最后一步只能匹配一个
+		memset(res,0,sizeof(res));
 		for(int i=1; i<=len; ++i){
 			for(int k=0; k<len; ++k){
-				if(!flag) twk(res[k]+=dp[i][i][k]);
-				if(ch[i]==ch[i+1]) twk(res[k]+=dp[i][i+1][k]);
+				if(!flag&&i<len) twk(res[k]+=dp[i+1][i-1][k]);
+				if(ch[i]==ch[i-1]) twk(res[k]+=dp[i][i-1][k]);
 			}
 		}
 	}
@@ -97,12 +100,6 @@ namespace G{
 		const int tot=(len*3>>1)+1;
 		mtrx step(tot+1);
 		//i=cnt24,端点不同
-		/*
-		for(int i=0; i<len; ++i){
-			printf("%d ",res[i]);
-		}
-		puts("");
-		*/
 		for(int i=0; i<len; ++i){
 			const int cnt25=(len-i+1)>>1;
 			step.n[cnt25-1][tot-i]=res[i];
@@ -136,22 +133,15 @@ int main(){
 	G::get_res(0);
 	const int tot=(len*3>>1)+1;
 	mtrx step(G::get_mtrx());
-	//printf("step: \n");
-	//step.oput();
-	//mtrx res=fpow(step,(n+len+1)>>1);
+	int ans=fpow(step,((n+len+1)>>1)).n[0][tot];
 	if(((n+len)&1)==0){
-		printf("%d\n",fpow(step,((n+len+1)>>1)).n[0][tot]);
+		printf("%d\n",ans);
 		return 0;
 	}
-	mtrx res=fpow(step,((n+len+1)>>1)-1);
-	//printf("res: \n");
-	//res.oput();
 	G::get_res(1);
 	step=G::get_mtrx();
-	//printf("step: \n");
-	//step.oput();
-	//puts("ans:");
-	//(res*step).oput();
-	printf("%d\n",((res*step).n[0][tot]+mod)%mod);
+	step.n[tot][tot]=0;
+	ans=(ans-(lint)fpow(step,((n+len+1)>>1)).n[0][tot]+mod)%mod;
+	printf("%d\n",ans);
 	return 0;
 }
