@@ -217,12 +217,12 @@ namespace G{
 			x=fa[top[x]];
 		}
 		if(dep[x]<dep[y]) std::swap(x,y);
-		if(fa[top[x]]){
+		for(; fa[top[x]]; x=fa[top[x]]){
 			for(int i=0; i<3; ++i){
 				orig[x][i]=T[i].ask(dfn[top[x]],dfn[bot[x]]).sl;
 			}
 		}
-		for(int x=a,y=b; top[x]!=top[y];){
+		for(x=a,y=b; top[x]!=top[y];){
 			if(dep[top[x]]<dep[top[y]]) std::swap(x,y);
 			for(int i=0; i<3; ++i){
 				T[i].set(dfn[top[x]],dfn[x],i==v);
@@ -234,7 +234,9 @@ namespace G{
 		if(dep[x]<dep[y]) std::swap(x,y);
 		for(int i=0; i<3; ++i){
 			T[i].set(dfn[y],dfn[x],i==v);
-			if(fa[top[x]]){
+		}
+		for(; fa[top[x]]; x=fa[top[x]]){
+			for(int i=0; i<3; ++i){
 				int delta=T[i].ask(dfn[top[x]],dfn[bot[x]]).sl-orig[x][i];
 				T[i].add(dfn[fa[top[x]]],delta,-1);
 			}
