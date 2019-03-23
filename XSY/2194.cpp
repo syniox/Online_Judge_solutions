@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cassert>
 #include <set>
+#include <sys/mman.h>
+#include <unistd.h>
 typedef long long lint;
 const int N=2e5+5;
 const double eps=1e-8;
@@ -12,67 +14,41 @@ int n,m;
 double val[N];
 std::set <int> list;
 
-inline int nxi(){
-	int x=0;
-	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
-	return x;
+namespace IO{
+    char *pt;
+    struct _Initializer{
+        _Initializer(){
+            pt=(char*)mmap(NULL,lseek(0,0,SEEK_END),PROT_READ,MAP_PRIVATE,0,0);
+        }
+    }_initializer;
+    inline int nxi(){
+        int x=0;
+        char c;
+        while((c=*pt++)>'9'||c<'0');
+        while(x=x*10-48+c,(c=*pt++)>='0'&&c<='9');
+        return x;
+    }
 }
+using IO::nxi;
 
-namespace T1{
-	int x,y;
-	double v,tr[N<<1];
-
-	inline int idx(const int l,const int r){
-		return (l+r)|(l!=r);
+namespace B{
+	double cur[N],tr[N];
+	inline void add_t(int x,const double v){
+		for(; x<=n; x+=x&-x) tr[x]+=v;
 	}
-
-	inline void upd(const int l,const int r){
-		const int k=idx(l,r),mid=(l+r)>>1;
-		tr[k]=tr[idx(l,mid)]+tr[idx(mid+1,r)];
-	}
-
-	void build(const int l,const int r){
-		if(l==r){
-			tr[idx(l,r)]=val[l];
-			return;
-		}
-		const int mid=(l+r)>>1;
-		build(l,mid);
-		build(mid+1,r);
-		upd(l,r);
-	}
-
-	double ask_t(const int l,const int r){
-		if(l>=x&&r<=y) return tr[idx(l,r)];
-		const int mid=(l+r)>>1;
+	inline double ask_t(int x){
 		double ans=0;
-		if(x<=mid) ans=ask_t(l,mid);
-		if(y>mid) ans+=ask_t(mid+1,r);
+		for(; x; x-=x&-x) ans+=tr[x];
 		return ans;
 	}
-
-	void mod_t(const int l,const int r){
-		if(l==r){
-			tr[idx(l,r)]=v;
-			return;
-		}
-		const int mid=(l+r)>>1;
-		if(x<=mid) mod_t(l,mid);
-		else mod_t(mid+1,r);
-		upd(l,r);
+	inline double ask(const int x,const int y){
+		if(x>y) return 0;
+		return ask_t(y)-ask_t(x-1);
 	}
-
-	inline double ask(const int l,const int r){
-		assert(l<=r);
-		T1::x=l,T1::y=r;
-		return ask_t(1,n);
-	}
-
 	inline void mod(const int x,const double v){
-		T1::x=x,T1::v=v;
-		mod_t(1,n);
+		double delta=v-cur[x];
+		cur[x]=v;
+		add_t(x,delta);
 	}
 }
 
@@ -126,23 +102,25 @@ namespace T2{
 	}
 
 	void split_t(int &r1,int &r2,const int l,const int r){
-		r2=++cnt;
 		if(tr[r1].sz<=x){
 			x-=tr[r1].sz;
 			r2=r1,r1=0;
 			return;
 		}
+		r2=++cnt;
 		if(l==r){
 			assert(tr[r1].sz>=x);
-			tr[r2].sz=tr[r1].sz-x;
-			tr[r2].v=log10(l)*tr[r2].sz;
+			tr[r2].sz=x;
+			tr[r2].v=log10(l)*x;
+			tr[r1].sz-=x;
 			tr[r1].v-=tr[r2].v;
+			x=0;
 			return;
 		}
 		const int mid=(l+r)>>1;
 		const int sl[2]={l,mid+1},sr[2]={mid,r};
 		split_t(tr[r1].c[type],tr[r2].c[type],sl[type],sr[type]);
-		if(x) split_t(tr[r1].c[type^1],tr[r2].c[type^1],sl[type],sr[type]);
+		if(x) split_t(tr[r1].c[type^1],tr[r2].c[type^1],sl[type^1],sr[type^1]);
 		if(r1) upd(r1);
 		if(r2) upd(r2);
 	}
@@ -175,31 +153,34 @@ namespace T2{
 		return askpre_t(T2::rt[rt],1,n);
 	}
 
-	inline void split(const int rt1,const int rt2,const int sz){
+	inline void split(const int rt1,const int rt2,int sz){
 		assert(rt[rt1]);
 		assert(list.find(rt2)==list.end());
 		assert(rt2-rt1==sz);
+		rev[rt2]=rev[rt1];
+		sz=tr[rt[rt1]].sz-sz;
 		T2::x=sz,type=rev[rt1]^1;
 		split_t(rt[rt1],rt[rt2],1,n);
-		T1::mod(rt1,tr[rt[rt1]].v);
-		T1::mod(rt2,tr[rt[rt2]].v);
+		B::mod(rt1,tr[rt[rt1]].v);
+		B::mod(rt2,tr[rt[rt2]].v);
 		list.insert(rt2);
 	}
 
 	inline void merge(const int rt1,const int rt2){
 		merge_t(rt[rt1],rt[rt2],1,n);
 		rt[rt2]=0;
-		T1::mod(rt1,tr[rt[rt1]].v);
-		T1::mod(rt2,0);
+		B::mod(rt1,tr[rt[rt1]].v);
+		B::mod(rt2,0);
 		list.erase(rt2);//optimize?
 	}
 }
 
 inline void merge(const int l,const int r,const bool type){
 	std::set <int> ::iterator it1,it2;
-	it1=list.lower_bound(l);
+	it1=--list.upper_bound(l);
 	if(*it1<l){
 		T2::split(*it1,l,l-*it1);
+		++it1;
 	}
 	it2=list.upper_bound(r);
 	if((it2==list.end()&&r<n)||(it2!=list.end()&&*it2>r+1)){
@@ -217,25 +198,26 @@ inline void merge(const int l,const int r,const bool type){
 
 inline int ask(const int l,const int r){
 	std::set <int> ::iterator pl,pr;
-	pl=list.lower_bound(l);
-	pr=list.lower_bound(r);
+	pl=--list.upper_bound(l);
+	pr=--list.upper_bound(r);
 	if(pl==pr){
 		double minus=l==*pl?0:T2::askpre(*pl,l-*pl,0);
 		double ans=T2::askpre(*pr,r-*pr+1,0)-minus;
-		return pow(10,ans-floor(ans))+eps;
+		return pow(10,ans-floor(ans+eps))+eps;
 	}
 	double ans=0;
 	if(pr!=list.begin()){
-		if(*pr-1>=l) ans+=T1::ask(l,*pr-1);
+		if(*pr-1>=l) ans+=B::ask(l,*pr-1);
 	}
-	if(!T1::tr[T1::idx(l,l)]){
+	if(!B::cur[l]){
 		int end;
 		if(pl==list.end()) end=n;
 		else end=*++pl-1,--pl;
 		ans+=T2::askpre(*pl,end-l+1,1);
 	}
 	ans+=T2::askpre(*pr,r-*pr+1,0);
-	return pow(10,ans-floor(ans))+eps;
+	int res=(pow(10,ans-floor(ans+eps))+eps);
+	return res;
 }
 
 int main(){
@@ -245,8 +227,8 @@ int main(){
 		val[i]=log10(x);
 		T2::insert(i,x,val[i]);
 		list.insert(i);
+		B::mod(i,val[i]);
 	}
-	T1::build(1,n);
 	for(int i=1; i<=m; ++i){
 		const int op=nxi(),x=nxi(),y=nxi();
 		if(op==1) merge(x,y,nxi());
