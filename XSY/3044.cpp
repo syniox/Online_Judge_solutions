@@ -30,10 +30,13 @@ inline void fwt(int *a,const int len,const bool type){
 		for(int j=0; j<len; j+=i<<1){
 			for(int k=0; k<i; ++k){
 				const int x=a[j+k],y=a[j+k+i];
-				a[j+k]=x+y,a[j+k+i]=(x+mod-y)%mod;
 				if(type){
-					a[j+k]=a[j+k]*inv2%mod;
-					a[j+k+i]=a[j+k+i]*inv2%mod;
+					a[j+k]=(x+y)*inv2%mod;
+					a[j+k+i]=(x+mod-y)*inv2%mod;
+				}
+				else{
+					a[j+k]=(x+y)%mod;
+					a[j+k+i]=(x+mod-y)%mod;
 				}
 			}
 		}
@@ -126,6 +129,14 @@ inline int qsum(const int x,const int t){
 	return cc0[x][t]?0:wsum[x][t];
 }
 
+inline int qsum(const _mtrx &x){
+	return (x.n[0][1]+x.n[2][1])%mod;
+}
+
+inline int qdp(const _mtrx &x){
+	return (x.n[0][0]+x.n[2][0])%mod;
+}
+
 namespace G{
 	int cnt,fir[N],fa[N],dep[N],sz[N],top[N],son[N],dfn[N],bot[N];
 	struct edge{
@@ -176,32 +187,31 @@ namespace G{
 			dfs_sum(y);
 			if(y==son[x]) continue;
 			for(int i=0; i<m; ++i){
-				int res(T[i].ask(dfn[y],dfn[bot[y]]).n[0][0]);
-				mergev(x,i,res);
+				mergev(x,i,qdp(T[i].ask(dfn[y],dfn[bot[y]])));
 			}
 		}
 		_mtrx res;
 		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
+		res.n[1][1]=res.n[2][0]=res.n[2][1]=res.n[2][2]=1;
 		for(int i=0; i<m; ++i){
-			res.n[0][0]=res.n[0][1]=(qsum(x,i)+1)%mod;
+			res.n[0][0]=res.n[0][1]=qsum(x,i)%mod;
 			T[i].mod(dfn[x],res);
 		}
 	}
 
 	inline void remake(const int x,const int t,int &prev,int &cur,_mtrx &res){
 		splitv(x,t,prev);
-		prev=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][0];
+		prev=qdp(T[t].ask(dfn[top[x]],dfn[bot[x]]));
 		mergev(x,t,cur);
-		res.n[0][0]=res.n[0][1]=(qsum(x,t)+1)%mod;
+		res.n[0][0]=res.n[0][1]=qsum(x,t)%mod;
 		T[t].mod(dfn[x],res);
-		cur=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][0];
+		cur=qdp(T[t].ask(dfn[top[x]],dfn[bot[x]]));
 	}
 
 	inline void chn(const int t,int x,const int lst,const int v){
 		_mtrx res;
 		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
+		res.n[1][1]=res.n[2][0]=res.n[2][1]=res.n[2][2]=1;
 		int prev=lst,cur=v;
 		remake(x,t,prev,cur,res);
 		for(int f=fa[top[x]]; f; x=f,f=fa[top[f]]){
@@ -227,7 +237,7 @@ inline void chn(const int x,const int v){
 inline int ask(const int q){
 	static int res[M];
 	for(int i=0; i<m; ++i){
-		res[i]=T[i].ask(G::dfn[1],G::dfn[G::bot[1]]).n[0][1];
+		res[i]=qsum(T[i].ask(G::dfn[1],G::dfn[G::bot[1]]));
 	}
 	fwt(res,m,1);
 	return q==0?(res[q]+mod-n)%mod:res[q];
