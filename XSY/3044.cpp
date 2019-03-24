@@ -40,19 +40,6 @@ inline void fwt(int *a,const int len,const bool type){
 	}
 }
 
-inline void splitv(const int x,const int t,const int v){
-	if(v==0){
-		assert(cc0[x][t]);
-		--cc0[x][t];
-	}
-	else wsum[x][t]=wsum[x][t]*fpow(v,mod-2)%mod;
-}
-
-inline void mergev(const int x,const int t,const int v){
-	if(v==0) ++cc0[x][t];
-	else wsum[x][t]=wsum[x][t]*v%mod;
-}
-
 class _mtrx{
 	public:
 		int n[3][3];
@@ -111,6 +98,7 @@ class _Tr{
 		}
 
 		inline _mtrx ask(const int l,const int r){
+			assert(l&&r&&l<=r);
 			x=l,y=r;
 			return ask_t(1,n);
 		}
@@ -120,6 +108,23 @@ class _Tr{
 			mod_t(1,n);
 		}
 }T[M];
+
+inline void splitv(const int x,const int t,const int v){
+	if(v==0){
+		assert(cc0[x][t]);
+		--cc0[x][t];
+	}
+	else wsum[x][t]=wsum[x][t]*fpow(v,mod-2)%mod;
+}
+
+inline void mergev(const int x,const int t,const int v){
+	if(v==0) ++cc0[x][t];
+	else wsum[x][t]=wsum[x][t]*v%mod;
+}
+
+inline int qsum(const int x,const int t){
+	return cc0[x][t]?0:wsum[x][t];
+}
 
 namespace G{
 	int cnt,fir[N],fa[N],dep[N],sz[N],top[N],son[N],dfn[N],bot[N];
@@ -159,11 +164,9 @@ namespace G{
 	}
 
 	void dfs_sum(const int x){
-		static int tmp[M],tmp2[M];
 		bot[x]=bot[top[x]];
 		wsum[x][val[x]]=1;
 		fwt(wsum[x],m,0);
-		memcpy(tmp2,wsum,m*sizeof(int));
 		for(int i=0; i<m; ++i){
 			if(!wsum[x][i]) wsum[x][i]=1,++cc0[x][i];
 		}
@@ -173,32 +176,36 @@ namespace G{
 			dfs_sum(y);
 			if(y==son[x]) continue;
 			for(int i=0; i<m; ++i){
-				int res(T[i].ask(dfn[y],dfn[bot[y]]).n[0][1]);
+				int res(T[i].ask(dfn[y],dfn[bot[y]]).n[0][0]);
 				mergev(x,i,res);
 			}
 		}
-		for(int i=0; i<m; ++i){
-			tmp[i]=cc0[x][i]?0:wsum[x][i];
-		}
 		_mtrx res;
 		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[2][2]=1;
+		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
 		for(int i=0; i<m; ++i){
-			res.n[0][0]=res.n[0][1]=tmp[i];
+			res.n[0][0]=res.n[0][1]=(qsum(x,i)+1)%mod;
 			T[i].mod(dfn[x],res);
 		}
+	}
+
+	inline void remake(const int x,const int t,int &prev,int &cur,_mtrx &res){
+		splitv(x,t,prev);
+		prev=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][0];
+		mergev(x,t,cur);
+		res.n[0][0]=res.n[0][1]=(qsum(x,t)+1)%mod;
+		T[t].mod(dfn[x],res);
+		cur=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][0];
 	}
 
 	inline void chn(const int t,int x,const int lst,const int v){
 		_mtrx res;
 		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[1][2]=res.n[2][0]=1;
-		int prev=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][1];
-		splitv(x,t,lst);
-		mergev(x,t,v);
-		int cur=(T[t].ask(dfn[top[x]],dfn[bot[x]])).n[0][1];
-		for(; x; x=fa[top[x]]){
-
+		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
+		int prev=lst,cur=v;
+		remake(x,t,prev,cur,res);
+		for(int f=fa[top[x]]; f; x=f,f=fa[top[f]]){
+			remake(f,t,prev,cur,res);
 		}
 	}
 }
@@ -240,7 +247,7 @@ int main(){
 	G::dfs_son(1);
 	G::dfs_top(1);
 	G::dfs_sum(1);
-	for(int i=1; i<=m; ++i){
+	for(int q=nxi(); q; --q){
 		scanf("%s",ch+1);
 		if(ch[1]=='Q') printf("%d\n",ask(nxi()));
 		else{
