@@ -8,6 +8,7 @@
 #include <map>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <emmintrin.h>
 typedef long long lint;
 const int N=1e4+5;
 const int M=60;
@@ -84,26 +85,54 @@ class UFS{
 		}
 }U[2];
 
-inline long double get_dat(Mtrx a){
+extern inline void m128d_mul(double *a,int len,double wgt){
+	assert((len&1)==0);
+	__m128d *ptr=(__m128d*)a;
+	__m128d mwgt(_mm_set1_pd(wgt));
+	for(int i=0; i<len; ++ptr,i+=2,a+=2){
+		_mm_store_pd(a,_mm_mul_pd(*ptr,mwgt));
+	}
+}
+
+extern inline void m128d_sub(double *a,double *b,int len){
+	assert((len&1)==0);
+	__m128d *pa=(__m128d*)a;
+	__m128d *pb=(__m128d*)b;
+	for(int i=0; i<len; ++pa,++pb,a+=2,b+=2,i+=2){
+		_mm_store_pd(a,_mm_sub_pd(*pa,*pb));
+	}
+}
+
+inline long double get_dat(const Mtrx &a){
+	static double mtx[M][M],tmp[M];
+	for(int i=0; i<a.sz; ++i){
+		memcpy(mtx[i],a.n[i],a.sz*sizeof(double));
+	}
+	const int end=(a.sz)+(a.sz&1);
 	for(int i=0; i<a.sz; ++i){
 		int j=i;
-		while(j<a.sz&&fabs(a.n[j][i])<eps) ++j;
+		while(j<a.sz&&fabs(mtx[j][i])<eps) ++j;
 		if(j==a.sz) return 0;
 		if(i!=j){
 			for(int k=0; k<a.sz; ++k){
-				std::swap(a.n[j][k],a.n[i][k]);
+				std::swap(mtx[j][k],mtx[i][k]);
 			}
 		}
+		int spos=i-(i&1),len=end-spos;
+		assert((len&1)==0);
 		for(int j=i+1; j<a.sz; ++j){
-			if(fabs(a.n[j][i])<eps) continue;
-			double wgt=a.n[j][i]/a.n[i][i];
-			for(int k=i; k<a.sz; ++k){
-				a.n[j][k]-=a.n[i][k]*wgt;
-			}
+			if(fabs(mtx[j][i])<eps) continue;
+			memcpy(tmp,mtx[i]+spos,len*sizeof(double));
+			double wgt=mtx[j][i]/mtx[i][i];
+			m128d_mul(tmp,len,wgt);
+			m128d_sub(mtx[j]+spos,tmp,len);
 		}
 	}
 	long double res=1;
-	for(int i=0; i<a.sz; ++i) res*=a.n[i][i];
+	for(int i=0; i<a.sz; ++i) res*=mtx[i][i];
+	for(int i=0; i<a.sz-1; ++i){
+		memset(mtx[i],0,a.sz*sizeof(double));
+	}
 	return res;
 }
 
@@ -183,9 +212,7 @@ int main(){
 	std::sort(eg+1,eg+m+1);
 	long double sum=0;
 	for(int i=1,j=1; i<=m; i=j+1){
-		for(j=i; j<m&&eg[j+1].dis==eg[i].dis;){
-			++j;
-		}
+		for(j=i; j<m&&eg[j+1].dis==eg[i].dis; ++j);
 		sum+=S::calc(i,j);
 	}
 	printf("%.5Lf\n",sum);
