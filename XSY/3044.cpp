@@ -20,7 +20,7 @@ inline int nxi(){
 template <class T> inline int fpow(int x,T t){
 	int ans=1;
 	for(; t; x=x*x%mod,t>>=1){
-		if(ans&1) ans=ans*x%mod;
+		if(t&1) ans=ans*x%mod;
 	}
 	return ans;
 }
@@ -38,6 +38,8 @@ inline void fwt(int *a,const int len,const bool type){
 					a[j+k]=(x+y)%mod;
 					a[j+k+i]=(x+mod-y)%mod;
 				}
+				assert(a[j+k]>=0);
+				assert(a[j+k+i]>=0);
 			}
 		}
 	}
@@ -49,15 +51,12 @@ class _mtrx{
 
 		friend _mtrx operator * (const _mtrx &a,const _mtrx &b){
 			_mtrx c;
-			for(int i=0; i<3; ++i){
-				for(int j=0; j<3; ++j){
-					lint tp=0;
-					for(int k=0; k<3; ++k){
-						tp+=a.n[i][k]*b.n[k][j];
-					}
-					c.n[i][j]=tp%mod;
-				}
-			}
+			memset(c.n,0,sizeof(c.n));
+			c.n[1][1]=c.n[2][2]=1;
+			c.n[0][0]=(lint)a.n[0][0]*b.n[0][0]%mod;
+			c.n[0][1]=((lint)a.n[0][0]*b.n[0][1]+a.n[0][1])%mod;
+			c.n[2][0]=((lint)a.n[2][0]*b.n[0][0]+b.n[2][0])%mod;
+			c.n[2][1]=((lint)a.n[2][0]*b.n[0][1]+a.n[2][1]+b.n[2][1])%mod;
 			return c;
 		}
 
@@ -209,9 +208,6 @@ namespace G{
 		}
 	}
 
-	inline void remake(const int x,const int t,int &prev_dp,int &cur_dp,
-			int *prev_s,int &cur_s,_mtrx &res);
-
 	inline void chn(const int t,int x,const int lst,const int v){
 		_mtrx res;
 		memset(res.n,0,sizeof(res.n));
@@ -223,9 +219,11 @@ namespace G{
 			_mtrx f(T[t].ask(dfn[top[x]],dfn[bot[x]]));
 			prev_dp=qdp(f),prev_s=qsum(f);
 			mergev(x,t,cur_dp);
+
 			res.n[0][0]=res.n[0][1]=qdp(x,t)%mod;
 			res.n[2][1]=(wsum[x][t]+1)%mod;
 			T[t].mod(dfn[x],res);
+
 			f=T[t].ask(dfn[top[x]],dfn[bot[x]]);
 			cur_dp=qdp(f),cur_s=qsum(f);
 		}
@@ -252,7 +250,7 @@ inline int ask(const int q){
 		res[i]=qsum(T[i].ask(G::dfn[1],G::dfn[G::bot[1]]));
 	}
 	fwt(res,m,1);
-	return q==0?(res[q]+mod-n)%mod:res[q];
+	return q==0?((res[q]-n)%mod+mod)%mod:res[q];
 }
 
 int main(){
