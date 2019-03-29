@@ -78,55 +78,78 @@ class _data{
 			}
 			return c;
 		}
-}cache[N];
+};
 
-namespace T{
-	_data v,tr[N<<1];
-	int x,y;
-
-	inline int idx(const int l,const int r){
-		return (l+r)|(l!=r);
-	}
-
-	inline void upd(const int l,const int r){
-		const int mid=(l+r)>>1;
-		tr[idx(l,r)]=tr[idx(mid+1,r)]*tr[idx(l,mid)];
-	}
-
-	_data ask_t(const int l,const int r){
-		if(l>=x&&r<=y) return tr[idx(l,r)];
-		const int mid=(l+r)>>1;
-		if(y<=mid) return ask_t(l,mid);
-		if(x>mid) return ask_t(mid+1,r);
-		return ask_t(mid+1,r)*ask_t(l,mid);
-	}
-
-	void mod_t(const int l,const int r){
-		if(l==r){
-			tr[idx(l,r)]=v;
-			return;
-		}
-		const int mid=(l+r)>>1;
-		if(x<=mid) mod_t(l,mid);
-		else mod_t(mid+1,r);
-		upd(l,r);
-	}
-
-	inline _data ask_p(const int x){
-		return tr[idx(x,x)];
-	}
-
-	inline _data ask(const int l,const int r){
-		assert(l&&r&&l<=r);
-		x=l,y=r;
-		return ask_t(1,n);
-	}
-
-	inline void mod(const int x,const _data &v){
-		T::v=v,T::x=x;
-		mod_t(1,n);
+namespace MP{
+	_data pool[N<<1],*ptr=pool+1;
+	inline _data* apply(const int len){
+		_data *tmp=ptr;
+		ptr+=len;
+		assert(int(ptr-pool)<N<<1);
+		return tmp;
 	}
 }
+
+class _Tr{
+	protected:
+		_data v,*tr;
+		int x,y,len;
+
+		inline int idx(const int l,const int r){
+			return (l+r)|(l!=r);
+		}
+
+		inline void upd(const int l,const int r){
+			const int mid=(l+r)>>1;
+			tr[idx(l,r)]=tr[idx(mid+1,r)]*tr[idx(l,mid)];
+		}
+
+		_data ask_t(const int l,const int r){
+			if(l>=x&&r<=y) return tr[idx(l,r)];
+			const int mid=(l+r)>>1;
+			if(y<=mid) return ask_t(l,mid);
+			if(x>mid) return ask_t(mid+1,r);
+			return ask_t(mid+1,r)*ask_t(l,mid);
+		}
+
+		void mod_t(const int l,const int r){
+			if(l==r){
+				tr[idx(l,r)]=v;
+				return;
+			}
+			const int mid=(l+r)>>1;
+			if(x<=mid) mod_t(l,mid);
+			else mod_t(mid+1,r);
+			upd(l,r);
+		}
+
+	public:
+		inline void init(int len){
+			assert(len);
+			this->len=len;
+			tr=MP::apply(len<<1)-1;
+		}
+
+		inline _data ask_p(const int x){
+			return tr[idx(x,x)];
+		}
+
+		inline _data ask_all(){
+			return tr[idx(1,len)];
+		}
+
+		inline _data ask(const int l,const int r){
+			assert(l&&r&&l<=r);
+			x=l,y=r;
+			return ask_t(1,len);
+		}
+
+		inline void mod(const int x,const _data &v){
+			assert(x>0);
+			this->v=v,this->x=x;
+			mod_t(1,len);
+		}
+}T[N];
 
 inline void splitv(const int x,const int t,const int v){
 	if(v==0){
@@ -192,6 +215,7 @@ namespace G{
 
 	void dfs_sum(const int x){
 		static _data f;
+		if(top[x]==x) T[x].init(dep[bot[x]]-dep[x]+1);
 		bot[x]=bot[top[x]];
 		wdp[x][val[x]]=1;
 		fwt(wdp[x],m,0);
@@ -203,7 +227,7 @@ namespace G{
 			if(y==fa[x]) continue;
 			dfs_sum(y);
 			if(y==son[x]) continue;
-			f=T::ask(dfn[y],dfn[bot[y]]);
+			f=T[top[y]].ask(dfn[y]-dfn[top[y]]+1,dfn[bot[y]]-dfn[top[y]]+1);
 			for(int i=0; i<m; ++i){
 				mergev(x,i,qdp(f.n[i]));
 				wsum[x][i]=(wsum[x][i]+qsum(f.n[i]))%mod;
@@ -217,8 +241,7 @@ namespace G{
 			f.n[i].n[0][0]=f.n[i].n[0][1]=qdp(x,i)%mod;
 			f.n[i].n[1][1]=(wsum[x][i]+1)%mod;
 		}
-		T::mod(dfn[x],f);
-		if(x==top[x]) cache[x]=T::ask(dfn[x],dfn[bot[x]]);
+		T[top[x]].mod(dfn[x]-dfn[top[x]]+1,f);
 	}
 
 	void chn(int x,const int *lst,const int *cur){
@@ -233,7 +256,7 @@ namespace G{
 		memset(prev_s,0,m*sizeof(int));
 		memset(cur_s,0,m*sizeof(int));
 		for(; x; x=fa[top[x]]){
-			_data f(cache[top[x]]);
+			_data f(T[top[x]].ask_all());
 			for(int i=0; i<m; ++i){
 				splitv(x,i,prev_dp[i]);
 				wsum[x][i]=(wsum[x][i]-prev_s[i]+cur_s[i]+mod)%mod;
@@ -242,12 +265,11 @@ namespace G{
 				res.n[i].n[0][0]=res.n[i].n[0][1]=qdp(x,i)%mod;
 				res.n[i].n[1][1]=(wsum[x][i]+1)%mod;
 			}
-			T::mod(dfn[x],res);
-			f=T::ask(dfn[top[x]],dfn[bot[x]]);
+			T[top[x]].mod(dfn[x]-dfn[top[x]]+1,res);
+			f=T[top[x]].ask_all();
 			for(int i=0; i<m; ++i){
 				cur_dp[i]=qdp(f.n[i]),cur_s[i]=qsum(f.n[i]);
 			}
-			cache[top[x]]=f;
 		}
 	}
 }
@@ -266,7 +288,7 @@ inline void chn(const int x,const int v){
 
 inline int ask(const int q){
 	static int pol[M];
-	_data res(cache[1]);
+	_data res(T[1].ask_all());
 	for(int i=0; i<m; ++i){
 		pol[i]=qsum(res.n[i]);
 	}
