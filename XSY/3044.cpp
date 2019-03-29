@@ -47,16 +47,15 @@ inline void fwt(int *a,const int len,const bool type){
 
 class _mtrx{
 	public:
-		int n[3][3];
+		int n[2][2];
 
 		friend _mtrx operator * (const _mtrx &a,const _mtrx &b){
 			_mtrx c;
 			memset(c.n,0,sizeof(c.n));
-			c.n[1][1]=c.n[2][2]=1;
-			c.n[0][0]=(lint)a.n[0][0]*b.n[0][0]%mod;
-			c.n[0][1]=((lint)a.n[0][0]*b.n[0][1]+a.n[0][1])%mod;
-			c.n[2][0]=((lint)a.n[2][0]*b.n[0][0]+b.n[2][0])%mod;
-			c.n[2][1]=((lint)a.n[2][0]*b.n[0][1]+a.n[2][1]+b.n[2][1])%mod;
+			c.n[0][0]=a.n[0][0]*b.n[0][0]%mod;
+			c.n[0][1]=(a.n[0][0]*b.n[0][1]+a.n[0][1])%mod;
+			c.n[1][0]=(a.n[1][0]*b.n[0][0]+b.n[1][0])%mod;
+			c.n[1][1]=(a.n[1][0]*b.n[0][1]+a.n[1][1]+b.n[1][1])%mod;
 			return c;
 		}
 
@@ -68,55 +67,66 @@ class _mtrx{
 		}
 };
 
-class _Tr{
-	protected:
-		_mtrx v,tr[N<<1];
-		int x,y;
-
-		inline int idx(const int l,const int r){
-			return (l+r)|(l!=r);
-		}
-
-		inline void upd(const int l,const int r){
-			const int mid=(l+r)>>1;
-			tr[idx(l,r)]=tr[idx(mid+1,r)]*tr[idx(l,mid)];
-		}
-
-		inline _mtrx ask_t(const int l,const int r){
-			if(l>=x&&r<=y) return tr[idx(l,r)];
-			const int mid=(l+r)>>1;
-			if(y<=mid) return ask_t(l,mid);
-			if(x>mid) return ask_t(mid+1,r);
-			return ask_t(mid+1,r)*ask_t(l,mid);
-		}
-
-		inline void mod_t(const int l,const int r){
-			if(l==r){
-				tr[idx(l,r)]=v;
-				return;
-			}
-			const int mid=(l+r)>>1;
-			if(x<=mid) mod_t(l,mid);
-			else mod_t(mid+1,r);
-			upd(l,r);
-		}
-
+class _data{
 	public:
-		inline _mtrx ask_p(const int x){
-			return tr[idx(x,x)];
-		}
+		_mtrx n[M];
 
-		inline _mtrx ask(const int l,const int r){
-			assert(l&&r&&l<=r);
-			x=l,y=r;
-			return ask_t(1,n);
+		friend _data operator * (const _data &a,const _data &b){
+			_data c;
+			for(int i=0; i<m; ++i){
+				c.n[i]=a.n[i]*b.n[i];
+			}
+			return c;
 		}
+}cache[N];
 
-		inline void mod(const int x,const _mtrx &v){
-			this->v=v,this->x=x;
-			mod_t(1,n);
+namespace T{
+	_data v,tr[N<<1];
+	int x,y;
+
+	inline int idx(const int l,const int r){
+		return (l+r)|(l!=r);
+	}
+
+	inline void upd(const int l,const int r){
+		const int mid=(l+r)>>1;
+		tr[idx(l,r)]=tr[idx(mid+1,r)]*tr[idx(l,mid)];
+	}
+
+	_data ask_t(const int l,const int r){
+		if(l>=x&&r<=y) return tr[idx(l,r)];
+		const int mid=(l+r)>>1;
+		if(y<=mid) return ask_t(l,mid);
+		if(x>mid) return ask_t(mid+1,r);
+		return ask_t(mid+1,r)*ask_t(l,mid);
+	}
+
+	void mod_t(const int l,const int r){
+		if(l==r){
+			tr[idx(l,r)]=v;
+			return;
 		}
-}T[M];
+		const int mid=(l+r)>>1;
+		if(x<=mid) mod_t(l,mid);
+		else mod_t(mid+1,r);
+		upd(l,r);
+	}
+
+	inline _data ask_p(const int x){
+		return tr[idx(x,x)];
+	}
+
+	inline _data ask(const int l,const int r){
+		assert(l&&r&&l<=r);
+		x=l,y=r;
+		return ask_t(1,n);
+	}
+
+	inline void mod(const int x,const _data &v){
+		T::v=v,T::x=x;
+		mod_t(1,n);
+	}
+}
 
 inline void splitv(const int x,const int t,const int v){
 	if(v==0){
@@ -136,11 +146,11 @@ inline int qdp(const int x,const int t){
 }
 
 inline int qsum(const _mtrx &x){
-	return (x.n[0][1]+x.n[2][1])%mod;
+	return (x.n[0][1]+x.n[1][1])%mod;
 }
 
 inline int qdp(const _mtrx &x){
-	return (x.n[0][0]+x.n[2][0])%mod;
+	return (x.n[0][0]+x.n[1][0])%mod;
 }
 
 namespace G{
@@ -181,6 +191,7 @@ namespace G{
 	}
 
 	void dfs_sum(const int x){
+		static _data f;
 		bot[x]=bot[top[x]];
 		wdp[x][val[x]]=1;
 		fwt(wdp[x],m,0);
@@ -192,40 +203,51 @@ namespace G{
 			if(y==fa[x]) continue;
 			dfs_sum(y);
 			if(y==son[x]) continue;
+			f=T::ask(dfn[y],dfn[bot[y]]);
 			for(int i=0; i<m; ++i){
-				_mtrx f(T[i].ask(dfn[y],dfn[bot[y]]));
-				mergev(x,i,qdp(f));
-				wsum[x][i]=(wsum[x][i]+qsum(f))%mod;
+				mergev(x,i,qdp(f.n[i]));
+				wsum[x][i]=(wsum[x][i]+qsum(f.n[i]))%mod;
 			}
 		}
-		_mtrx res;
-		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
 		for(int i=0; i<m; ++i){
-			res.n[0][0]=res.n[0][1]=qdp(x,i)%mod;
-			res.n[2][1]=(wsum[x][i]+1)%mod;
-			T[i].mod(dfn[x],res);
+			memset(f.n[i].n,0,sizeof(f.n[i].n));
+			f.n[i].n[1][0]=1;
 		}
+		for(int i=0; i<m; ++i){
+			f.n[i].n[0][0]=f.n[i].n[0][1]=qdp(x,i)%mod;
+			f.n[i].n[1][1]=(wsum[x][i]+1)%mod;
+		}
+		T::mod(dfn[x],f);
+		if(x==top[x]) cache[x]=T::ask(dfn[x],dfn[bot[x]]);
 	}
 
-	inline void chn(const int t,int x,const int lst,const int v){
-		_mtrx res;
-		memset(res.n,0,sizeof(res.n));
-		res.n[1][1]=res.n[2][0]=res.n[2][2]=1;
-		int prev_dp=lst,cur_dp=v,prev_s=0,cur_s=0;
+	void chn(int x,const int *lst,const int *cur){
+		static _data res;
+		static int prev_dp[M],cur_dp[M],prev_s[M],cur_s[M];
+		for(int i=0; i<m; ++i){
+			memset(res.n[i].n,0,sizeof(res.n[i].n));
+			res.n[i].n[1][0]=1;
+		}
+		memcpy(prev_dp,lst,m*sizeof(int));
+		memcpy(cur_dp,cur,m*sizeof(int));
+		memset(prev_s,0,m*sizeof(int));
+		memset(cur_s,0,m*sizeof(int));
 		for(; x; x=fa[top[x]]){
-			splitv(x,t,prev_dp);
-			wsum[x][t]=(wsum[x][t]-prev_s+cur_s+mod)%mod;
-			_mtrx f(T[t].ask(dfn[top[x]],dfn[bot[x]]));
-			prev_dp=qdp(f),prev_s=qsum(f);
-			mergev(x,t,cur_dp);
-
-			res.n[0][0]=res.n[0][1]=qdp(x,t)%mod;
-			res.n[2][1]=(wsum[x][t]+1)%mod;
-			T[t].mod(dfn[x],res);
-
-			f=T[t].ask(dfn[top[x]],dfn[bot[x]]);
-			cur_dp=qdp(f),cur_s=qsum(f);
+			_data f(cache[top[x]]);
+			for(int i=0; i<m; ++i){
+				splitv(x,i,prev_dp[i]);
+				wsum[x][i]=(wsum[x][i]-prev_s[i]+cur_s[i]+mod)%mod;
+				prev_dp[i]=qdp(f.n[i]),prev_s[i]=qsum(f.n[i]);
+				mergev(x,i,cur_dp[i]);
+				res.n[i].n[0][0]=res.n[i].n[0][1]=qdp(x,i)%mod;
+				res.n[i].n[1][1]=(wsum[x][i]+1)%mod;
+			}
+			T::mod(dfn[x],res);
+			f=T::ask(dfn[top[x]],dfn[bot[x]]);
+			for(int i=0; i<m; ++i){
+				cur_dp[i]=qdp(f.n[i]),cur_s[i]=qsum(f.n[i]);
+			}
+			cache[top[x]]=f;
 		}
 	}
 }
@@ -238,19 +260,18 @@ inline void chn(const int x,const int v){
 	lst[val[x]]=1;
 	fwt(res,m,0);
 	fwt(lst,m,0);
-	for(int i=0; i<m; ++i){
-		G::chn(i,x,lst[i],res[i]);
-	}
+	G::chn(x,lst,res);
 	val[x]=v;
 }
 
 inline int ask(const int q){
-	static int res[M];
+	static int pol[M];
+	_data res(cache[1]);
 	for(int i=0; i<m; ++i){
-		res[i]=qsum(T[i].ask(G::dfn[1],G::dfn[G::bot[1]]));
+		pol[i]=qsum(res.n[i]);
 	}
-	fwt(res,m,1);
-	return q==0?((res[q]-n)%mod+mod)%mod:res[q];
+	fwt(pol,m,1);
+	return q==0?((pol[q]-n)%mod+mod)%mod:pol[q];
 }
 
 int main(){
