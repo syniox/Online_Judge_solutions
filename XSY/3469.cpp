@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <cmath>
 typedef long long lint;
-const int N=5e5+5;
+const int N=1e6+5;
 int m,q,opt[N],exicnt[N],lstpos[N];
 struct _pair{
 	lint x,y;
 	friend bool operator < (const _pair &a,const _pair &b){
-		return a.x==b.x?a.x<b.x:a.y<b.y;
+		return a.x==b.x?a.y<b.y:a.x<b.x;
 	}
 	friend bool operator == (const _pair &a,const _pair &b){
 		return a.x==b.x&&a.y==b.y;
@@ -26,12 +26,22 @@ inline __int128 crs(const _pair &a,const _pair &b){
 	return (__int128)a.x*b.y-(__int128)a.y*b.x;
 }
 
+inline char get_c(){
+	static char *h,*t,buf[20000];
+	if(h==t){
+		t=(h=buf)+fread(buf,1,20000,stdin);
+		if(h==t) return EOF;
+	}
+	return *h++;
+}
+
 template <class T> inline T nxi(){
 	T x=0;
 	char c;
-	while((c=getchar())>'9'||c<'0');
-	while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
-	return x;
+	while(((c=get_c())>'9'||c<'0')&&(c!='-'));
+	const bool f=(c=='-')&&(c=get_c());
+	while(x=x*10-48+c,(c=get_c())>='0'&&c<='9');
+	return f?-x:x;
 }
 
 template <class T> class _Disc{
@@ -84,9 +94,9 @@ namespace T{
 			}
 			if(hd==tl) continue;
 			_pair cur=q_list[t][i];
-			for(; hd<tl&&crs(cur-stk[hd],cur-stk[hd+1])>=0; ++hd);
-			if(crs(ans,cur-stk[hd])>0){
-				ans=cur-stk[hd];
+			for(; hd<tl-1&&crs(stk[hd]-cur,stk[hd+1]-cur)>=0; ++hd);
+			if((ans.x==0&&ans.y==1)||crs(ans,stk[hd]-cur)>0){
+				ans=stk[hd]-cur;
 			}
 		}
 	}
@@ -114,9 +124,49 @@ namespace T{
 	}
 
 	inline void mod(const int x,const int y,const _pair cur){
-		T::x=x,T::y=y;
+		T::x=x,T::y=y,T::v=cur;
 		mod_t(1,m);
 	}
+}
+
+__float128 f128_sqrt(__float128 x){
+	assert(x>=1);
+	__float128 l=0,r=x,mid;
+	for(int i=0; i<1e3; ++i){
+		mid=(l+r)*0.5;
+		if(mid*mid>x) r=mid;
+		else l=mid;
+	}
+	return l;
+}
+
+void f128_print(__float128 x,int c,char end='\n'){
+	static int s[50];
+	if(x<0){
+		x=-x;
+		putchar('-');
+	}
+	for(int i=0; i<=c+1; ++i){
+		for(int j=9; ~j; --j){
+			if((__float128)j<x){
+				x-=s[i]=j;
+				break;
+			}
+		}
+		x*=10;
+	}
+	if(s[c+1]>=5){
+		++s[c];
+		for(int i=c; i&&s[i]>=10; --i){
+			s[i]-=10;
+			++s[i-1];
+		}
+	}
+	printf("%d.",s[0]);
+	for(int i=1; i<=c; ++i){
+		printf("%d",s[i]);
+	}
+	putchar(end);
 }
 
 int main(){
@@ -147,7 +197,15 @@ int main(){
 				lstpos[id]=0;
 			}
 		}
-		if(opt[i]==3) T::ask(i,cur);
+		if(opt[i]==3){
+			if(id<=D.tot&&D.buk[id-1]==cur){
+				printf("1.");
+				for(int i=1; i<=q; ++i) putchar('0');
+				puts("");
+				return 0;
+			}
+			T::ask(i,cur);
+		}
 	}
 	for(int i=1; i<=D.tot; ++i){
 		if(lstpos[i]){
@@ -160,13 +218,8 @@ int main(){
 		}
 	}
 	T::build(1,m);
-	long double res=(__int128)ans.y*ans.y+(__int128)ans.x*ans.x;
-	res=sqrt(res);
-	switch(q){
-		case 6: printf("%.6Lf\n",res); break;
-		case 18: printf("%.18Lf\n",res); break;
-		case 30: printf("%.30Lf\n",res); break;
-		default: assert(0);
-	}
+	__float128 res=(__float128)ans.y*ans.y+(__float128)ans.x*ans.x;
+	res=-(__float128)ans.y/f128_sqrt(res);
+	f128_print(res,q);
 	return 0;
 }
