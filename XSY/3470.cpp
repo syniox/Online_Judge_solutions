@@ -90,6 +90,7 @@ namespace S{
 	}
 
 	inline int getlcp(int x,int y){
+		if(x==y) return n-x+1;
 		x=rnk[x],y=rnk[y];
 		if(x>y) std::swap(x,y);
 		int lg=lg2[y-x];
@@ -98,22 +99,22 @@ namespace S{
 }
 
 _pair merge(const _pair pr,const int tl,const int tr,const int len){
-	if(tl>tr) return pr;
+	if(pr.x>pr.y||tl>tr) return pr;
 	_pair ans;
 	int l,r,mid,tmp;
-	l=pr.x,r=pr.y;
+	l=pr.x,r=pr.y+1;
 	while(l!=r){
 		mid=(l+r)>>1;
-		if((tmp=S::getlcp(S::sa[pr.x]+len,tl))>=len) r=mid;
-		else if(str[pr.x+len+tmp]>str[tl+tmp]) r=mid; 
+		if((tmp=S::getlcp(S::sa[mid]+len,tl))>=tr-tl+1) r=mid;
+		else if(str[S::sa[mid]+len+tmp]>str[tl+tmp]) r=mid;
 		else l=mid+1;
 	}
 	ans.x=l;
 	l=l-1,r=pr.y;
 	while(l!=r){
 		mid=(l+r+1)>>1;
-		if((tmp=S::getlcp(S::sa[pr.x]+len,tl))>=len) l=mid;
-		else if(str[pr.x+len+tmp]<str[tl+tmp]) l=mid;
+		if((tmp=S::getlcp(S::sa[mid]+len,tl))>=tr-tl+1) l=mid;
+		else if(str[S::sa[mid]+len+tmp]<str[tl+tmp]) l=mid;
 		else r=mid-1;
 	}
 	ans.y=r;
@@ -122,22 +123,16 @@ _pair merge(const _pair pr,const int tl,const int tr,const int len){
 
 inline int ask(const int x){
 	_pair res=merge(stat[x],lstpos[x],curpos,plen[x]);
-	return S::sum[res.y]-S::sum[res.x]+1;
+	return S::sum[res.y]-S::sum[res.x-1];
 }
 
 int main(){
-#ifndef ONLINE_JUDGE
-	freopen("d.in","r",stdin);
-#endif
 	nxi();
 	n=nxi(),m=nxi(),q=nxi();
 	init();
 	scanf("%s",str+1);
 	old_n=n;
 	str[++n]='z'+1;
-	for(int i=1; i<=m; ++i){
-		stat[i]=(_pair){1,n};
-	}
 	for(int i=1; i<=q; ++i){
 		opt[i]=nxi();
 		if(opt[i]==2){
@@ -147,14 +142,19 @@ int main(){
 		}
 		else optarg[i]=nxi();
 	}
+	for(int i=1; i<=m; ++i){
+		stat[i]=(_pair){1,n};
+	}
 	S::build(str,old_n,n);
+	curpos=old_n+1;
 	for(int i=1; i<=q; ++i){
 		if(opt[i]==1){
 			const int x=optarg[i];
 			if(inq[x]){
-				stat[x]=merge(stat[x],lstpos[x],curpos,plen[x]);
 				inq[x]=0;
-				vis[x]=1;
+				vis[x]|=lstpos[x]<=curpos;
+				stat[x]=merge(stat[x],lstpos[x],curpos,plen[x]);
+				plen[x]+=curpos-lstpos[x]+1;
 			}
 			else{
 				inq[x]=1;
@@ -167,11 +167,11 @@ int main(){
 		if(opt[i]==3){
 			const int x=optarg[i];
 			if(!vis[x]){
-				if(lstpos[x]&&lstpos[x]<=curpos) printf("%d\n",ask(x));
+				if(inq[x]&&lstpos[x]<=curpos) printf("%d\n",ask(x));
 				else puts("0");
 			}
 			else if(!inq[x]){
-				printf("%d\n",S::sum[stat[x].y]-S::sum[stat[x].x+1]);
+				printf("%d\n",S::sum[stat[x].y]-S::sum[stat[x].x-1]);
 			}
 			else printf("%d\n",ask(x));
 		}
