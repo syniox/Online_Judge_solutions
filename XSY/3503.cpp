@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cassert>
 const int N=1.5e5+5;
-int delta,n,m,val[N],buk[N*3],psum[N*3];
+int n,m,oset,delta,val[N],buk[N<<2];
 
 inline int nxi(){
 	int x=0;
@@ -15,19 +15,59 @@ inline int nxi(){
 }
 
 namespace T{
-	int x,y,v,tr[N*6];
+	int x,y,v;
+	struct node{
+		int mn,ncnt,tag;
+		inline void getpsh(const int v){
+			mn+=v,tag+=v;
+		}
+	}tr[N<<3];
 
 	inline int idx(const int l,const int r){
 		return (l+r)|(l!=r);
 	}
 
-	inline void upd(const int l,const int r){
+	inline void psh(const int l,const int r){
+		const int tag=tr[idx(l,r)].tag,mid=(l+r)>>1;
+		if(!tag||l==r) return;
+		tr[idx(l,mid)].getpsh(tag);
+		tr[idx(mid+1,r)].getpsh(tag);
+		tr[idx(l,r)].tag=0;
+	}
+
+	void upd(const int l,const int r){
+		const int k=idx(l,r),mid=(l+r)>>1;
+		const int ls=idx(l,mid),rs=idx(mid+1,r);
+		tr[k].mn=std::min(tr[ls].mn,tr[rs].mn);
+		tr[k].ncnt=0;
+		if(tr[ls].mn==tr[k].mn) tr[k].ncnt+=tr[ls].ncnt;
+		if(tr[rs].mn==tr[k].mn) tr[k].ncnt+=tr[rs].ncnt;
+	}
+
+	void build(const int l,const int r){
+		tr[idx(l,r)].ncnt=r-l+1;
+		if(l==r) return;
 		const int mid=(l+r)>>1;
-		tr[idx(l,r)]=tr[idx(l,mid)]+tr[idx(mid+1,r)];
+		build(l,mid);
+		build(mid+1,r);
+	}
+
+	void mod_t(const int l,const int r){
+		if(l!=r) psh(l,r);
+		if(l>=x&&r<=y){
+			tr[idx(l,r)].getpsh(v);
+			return;
+		}
+		const int mid=(l+r)>>1;
+		if(x<=mid) mod_t(l,mid);
+		if(y>mid) mod_t(mid+1,r);
+		upd(l,r);
 	}
 
 	int ask_t(const int l,const int r){
-		if(l>=x&&r<=y) return tr[idx(l,r)];
+		const int k=idx(l,r);
+		psh(l,r);
+		if(l>=x&&r<=y) return tr[k].mn==0?tr[k].ncnt:0;
 		const int mid=(l+r)>>1;
 		int ans=0;
 		if(x<=mid) ans+=ask_t(l,mid);
@@ -35,25 +75,14 @@ namespace T{
 		return ans;
 	}
 
-	void mod_t(const int l,const int r){
-		if(l==r){
-			tr[idx(l,r)]=v;
-			return;
-		}
-		const int mid=(l+r)>>1;
-		if(x<=mid) mod_t(l,mid);
-		else mod_t(mid+1,r);
-		upd(l,r);
-	}
-
-	void mod(const int x,const int v){
-		T::x=x,T::v=v;
-		mod_t(1,n+(m<<1));
+	inline void mod(const int l,const int r,const int v){
+		T::x=l,T::y=r,T::v=v;
+		mod_t(1,oset+n+m);
 	}
 
 	inline int ask(const int l,const int r){
 		T::x=l,T::y=r;
-		return ask_t(1,n+(m<<1));
+		return ask_t(1,oset+n+m);
 	}
 }
 
@@ -62,40 +91,41 @@ int main(){
 	freopen("d.in","r",stdin);
 #endif
 	n=nxi(),m=nxi();
+	oset=n+m;
 	for(int i=1; i<=n; ++i){
 		val[i]=nxi();
-		++buk[val[i]];
+		++buk[oset+val[i]];
 	}
+	T::build(1,oset+n+m);
 	for(int i=1; i<=n; ++i){
-		for(int j=0; j<buk[i]; ++j){
-			++psum[m+i-j];
+		if(buk[oset+i]){
+			T::mod(oset+i-buk[oset+i]+1,oset+i,1);
 		}
-	}
-	for(int i=1; i<=n; ++i){
-		if(psum[m+i]) T::mod(m+i,1);
 	}
 	for(int i=1; i<=m; ++i){
-		const int p=nxi(),x=nxi();
-		if(p==0) delta+=x;
-		else{
-			if(!--psum[m+val[p]-(--buk[val[p]])]){
-				T::mod(m+val[p]-buk[val[p]],0);
+		int p=nxi(),x=nxi();
+		if(p>0){
+			--buk[oset+val[p]];
+			if(val[p]<=-delta+n){
+				int pos=oset+val[p]-buk[oset+val[p]];
+				T::mod(pos,pos,-1);
 			}
 			val[p]=x-delta;
-			if(!psum[m+val[p]-(buk[val[p]]++)]++){
-				T::mod(m+val[p]-buk[val[p]]+1,1);
-			}
+			int pos=oset+val[p]-buk[oset+val[p]];
+			++buk[oset+val[p]];
+			T::mod(pos,pos,1);
 		}
-		int res=T::ask(m+delta+1,m+delta+n);
-		printf("%d\n",n-res);
+		else if(x>0){
+			int pos=oset-delta+n;
+			if(buk[pos]) T::mod(pos-buk[pos]+1,pos,-1);
+			++delta;
+		}
+		else{
+			--delta;
+			int pos=oset-delta+n;
+			if(buk[pos]) T::mod(pos-buk[pos]+1,pos,1);
+		}
+		printf("%d\n",T::ask(oset-delta+1,oset-delta+n));
 	}
 	return 0;
 }
-/*
-2 5
--7 9 
-2 -8
-1 -6
-0 1
-1 3
-   */
