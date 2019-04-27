@@ -3,10 +3,12 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <vector>
 typedef long long lint;
 const int N=2e5+5;
 const int mod=1e9+7;
 int n,dp[N];//前缀和
+std::vector <int> m_ls[N];
 struct _pair{
 	int x,y;
 }dt[N],spc[N];
@@ -64,9 +66,41 @@ template <class T> class _Disc{
 };
 _Disc <int> D;
 
+template <class T> inline int fpow(int x,T t){
+	int ans=1;
+	for(; t; x=(lint)x*x%mod,t>>=1){
+		if(t&1) ans=(lint)ans*x%mod;
+	}
+	return ans;
+}
+
+int solve(const int t){
+	static int buk[N];
+	const int sz=m_ls[t].size();
+	if(!sz) return 0;
+	std::sort(m_ls[t].begin(),m_ls[t].end());
+	for(std::vector <int> ::iterator it=m_ls[t].begin(); it!=m_ls[t].end(); ++it){
+		++buk[*it];
+	}
+	int lst_dp=0,res=0,psum=0;
+	for(std::vector <int> ::iterator it=m_ls[t].begin(); it!=m_ls[t].end(); ++it){
+		if(!buk[*it]) continue;
+		if(psum){
+			int wgt=(dp[*it-1]-lst_dp+mod)%mod;
+			res=(res+(lint)wgt*(fpow(2,psum)-1)%mod*fpow(2,sz-psum))%mod;
+		}
+		psum+=buk[*it];
+		buk[*it]=0;
+		lst_dp=*it?dp[*it-1]:0;
+	}
+	int wgt=dp[t-1]-lst_dp+mod;
+	res=(res+(lint)wgt*(fpow(2,sz)-1+mod))%mod;
+	return res;
+}
+
 int main(){
 #ifndef ONLINE_JUDGE
-	freopen("d.in","r",stdin);
+	//freopen("d.in","r",stdin);
 #endif
 	n=nxi();
 	for(int i=1; i<=n; ++i){
@@ -89,14 +123,14 @@ int main(){
 		spc[i].y=res?res:i;
 		B::apl(dt[i].x,i);
 	}
-	std::sort(spc+1,spc+n+1,_pr_cmp_y);
-	dp[0]=1;
-	for(int i=1,j=1; i<=n; ++i){
-		dp[i]=dp[i-1];
-		for(; j&&spc[j].y==i; ++j){
-			dp[i]=(dp[i]+(lint)(dp[i]-(spc[j].x>1?dp[spc[j].x-2]:0)+mod))%mod;
-		}
+	for(int i=1; i<=n; ++i){
+		//printf("%d %d\n",spc[i].x,spc[i].y);
+		m_ls[spc[i].y].push_back(spc[i].x-1);
 	}
-	printf("%d\n",(dp[n]-dp[n-1]+mod)%mod);
+	dp[0]=1;
+	for(int i=1; i<n; ++i){
+		dp[i]=(dp[i-1]+solve(i))%mod;
+	}
+	printf("%d\n",solve(n));
 	return 0;
 }
