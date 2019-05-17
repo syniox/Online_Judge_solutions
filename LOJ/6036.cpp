@@ -4,7 +4,7 @@
 #include <cassert>
 #include <algorithm>
 const int N=5e5+5;
-int n,totlen,pos0[N],pos1[N],spos[N],slen[N];
+int n,totlen,id[N],pos0[N],pos1[N],spos[N],slen[N];
 char *str[N];
 
 namespace utils{
@@ -72,47 +72,51 @@ namespace S{
 		cnt=0;
 	}
 
-	int pos(const char *str,const int len){
+	int pos(const char *str,const int len,const bool type){
 		assert(len);
 		int p=0;
 		for(int i=1; i<=len; ++i){
 			int c=str[i]-'0';
-			if(!tr[p][c]) return 0;
+			if(!tr[p][c]) return type?p:0;
 			p=tr[p][c];
 		}
 		return p;
 	}
 
 	int ins(const char *str,const int len){
-		int p=0,lst;
-		for(int i=1; i<=len; ++i){
+		int p=0;
+		for(int i=1; i<len; ++i){
 			int c=str[i]-'0';
-			lst=tr[p][c];
-			tr[p][c]=++cnt;
-			if(lst){
-				memcpy(tr[cnt],tr[lst],sizeof(tr[cnt]));
-			}
-			p=cnt;
+			if(!tr[p][c]) tr[p][c]=++cnt;
+			p=tr[p][c];
 		}
-		if(lst){
-			G::add(p+offs,lst+offs);
+		int &prev=tr[p][str[len]-'0'];
+		++cnt;
+		if(prev){
+			tr[cnt][0]=tr[prev][0];
+			tr[cnt][1]=tr[prev][1];
+			G::add(cnt+offs,prev+offs);
 		}
-		return p;
+		prev=cnt;
+		return cnt;
 	}
 
-	void build_g(){
+	void build_dn(){
 		for(int i=1; i<=cnt; ++i){
 			if(tr[i][0]) G::add(i+offs,tr[i][0]+offs);
 			if(tr[i][1]) G::add(i+offs,tr[i][1]+offs);
 		}
 	}
 
-	bool get_vld(){
-		static int id[N],que[N<<1];
-		for(int i=1; i<=n; ++i){
-			id[i]=i;
+	void build_up(){
+		for(int i=1; i<=cnt; ++i){
+			if(tr[i][0]) G::add(tr[i][0]+offs,i+offs);
+			if(tr[i][1]) G::add(tr[i][1]+offs,i+offs);
 		}
-		std::sort(id+1,id+n+1,cmp_slen);
+	}
+
+	bool get_vld(){
+		static int que[N<<1];
 		for(int i=1; i<=n; ++i){
 			if(spos[i]) continue;
 			pos0[i]=ins(str[i],slen[i]);
@@ -127,14 +131,14 @@ namespace S{
 				if(j==slen[x]&&invld[p]) return 0;
 				invld[p]=1;
 			}
-			assert(p=pos0[x]);
+			assert(p==pos0[x]);
 		}
 		for(int i=1; i<=n; ++i){
 			if(!spos[i]) continue;
 			str[i][spos[i]]='0';
-			int p0=pos(str[i],slen[i]);
+			int p0=pos(str[i],slen[i],0);
 			str[i][spos[i]]='1';
-			int p1=pos(str[i],slen[i]);
+			int p1=pos(str[i],slen[i],0);
 			assert(p0&&p1);
 			if(invld[p0]&&invld[p1]) return 0;
 			if(invld[p0]) G::add(i,i+n);
@@ -162,7 +166,11 @@ namespace S{
 		}
 		for(int i=1; i<=n; ++i){
 			if(!spos[i]) continue;
-			int p0=pos0[i],p1=pos1[i];
+			str[i][spos[i]]='0';
+			int p0=pos(str[i],slen[i],0);
+			str[i][spos[i]]='1';
+			int p1=pos(str[i],slen[i],0);
+			assert(p0&&p1);
 			if(invld[p0]&&invld[p1]) return 0;
 			if(invld[p0]) G::add(i,i+n);
 			if(invld[p1]) G::add(i+n,i);
@@ -187,16 +195,19 @@ void getstr(const int x){
 	memcpy(str[x],tmp,l+1*sizeof(char));
 }
 
-void build(const int x){
+void lnkstr(const int x,const bool type){
 	if(!spos[x]) return;
 	char *str=::str[x];
 	str[spos[x]]='0';
-	const int lnk_0=S::pos(str,slen[x]);
+	const int lnk_0=S::pos(str,slen[x],type);
 	str[spos[x]]='1';
-	const int lnk_1=S::pos(str,slen[x]);
+	const int lnk_1=S::pos(str,slen[x],type);
 	if(lnk_0) G::add(x+0,lnk_0+S::offs);
 	if(lnk_1) G::add(x+n,lnk_1+S::offs);
+}
 
+void addstr(const int x){
+	char *str=::str[x];
 	str[spos[x]]='1';
 	pos0[x]=S::ins(str,slen[x]);
 	G::add(pos0[x]+S::offs,x+0);
@@ -207,8 +218,7 @@ void build(const int x){
 
 bool jdg(){
 	for(int i=1; i<=n; ++i){
-		assert(G::bel[i]&&G::bel[i+n]);
-		if(G::bel[i]==G::bel[i+n]) return 0;
+		if(spos[i]&&G::bel[i]==G::bel[i+n]) return 0;
 	}
 	return 1;
 }
@@ -216,25 +226,37 @@ bool jdg(){
 int main(){
 	n=nxi();
 	for(int i=1; i<=n; ++i){
+		id[i]=i;
 		getstr(i);
 	}
-	S::offs=n*2;
+	std::sort(id+1,id+n+1,cmp_slen);
+
+	//长度不长于id
+	S::offs=n<<1;
 	for(int i=1; i<=n; ++i){
-		build(i);
+		lnkstr(id[i],1);
+		addstr(id[i]);
 	}
-	S::build_g();
+	S::build_up();
+
+	//长度不短于id
+	S::offs+=S::cnt;
 	S::clear();
-	S::offs=n*2+totlen*2;
 	for(int i=n; i>=1; --i){
-		build(i);
+		lnkstr(id[i],0);
+		addstr(id[i]);
 	}
-	S::build_g();
+	S::build_dn();
+
 	if(S::get_vld()==0){
 		puts("NO");
 		return 0;
 	}
-	for(int i=1; i<=n<<1; ++i){
-		if(!G::bel[i]) G::tarjan(i);
+	for(int i=1; i<=n; ++i){
+		if(spos[i]){
+			if(!G::bel[i+0]) G::tarjan(i+0);
+			if(!G::bel[i+n]) G::tarjan(i+n);
+		}
 	}
 	puts(jdg()?"YES":"NO");
 	return 0;
