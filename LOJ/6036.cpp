@@ -46,7 +46,7 @@ namespace G{
 	}
 
 	void tarjan(const int x){
-		static int cnd,top,stk[N<<2];
+		static int cnd,top,stk[N*6];
 		stk[++top]=x;
 		dfn[x]=low[x]=++cnd;
 		for(int i=fir[x]; i; i=eg[i].nx){
@@ -108,7 +108,7 @@ namespace S{
 	}
 
 	bool get_vld(){
-		static int id[N];
+		static int id[N],que[N<<1];
 		for(int i=1; i<=n; ++i){
 			id[i]=i;
 		}
@@ -121,12 +121,13 @@ namespace S{
 			int x=id[i];
 			if(spos[x]) continue;
 			int p=0;
-			for(int j=1; j<=slen[i]; ++j){
-				int c=str[i][j]-'0';
+			for(int j=1; j<=slen[x]; ++j){
+				int c=str[x][j]-'0';
 				p=tr[p][c];
-				if(j==slen[i]&&invld[p]) return 0;
+				if(j==slen[x]&&invld[p]) return 0;
 				invld[p]=1;
 			}
+			assert(p=pos0[x]);
 		}
 		for(int i=1; i<=n; ++i){
 			if(!spos[i]) continue;
@@ -135,6 +136,33 @@ namespace S{
 			str[i][spos[i]]='1';
 			int p1=pos(str[i],slen[i]);
 			assert(p0&&p1);
+			if(invld[p0]&&invld[p1]) return 0;
+			if(invld[p0]) G::add(i,i+n);
+			if(invld[p1]) G::add(i+n,i);
+		}
+		memset(invld,0,totlen*2*sizeof(bool));
+		for(int i=1; i<=n; ++i){
+			if(!spos[i]) invld[pos0[i]]=1;
+		}
+		int hd=0,tl=0;
+		for(int i=1; i<=cnt; ++i){
+			if(invld[i]) que[tl++]=i;
+		}
+		while(hd!=tl){
+			const int x=que[hd++];
+			int c0=tr[x][0],c1=tr[x][1];
+			if(c0&&!invld[c0]){
+				que[tl++]=c0;
+				invld[c0]=1;
+			}
+			if(c1&&!invld[c1]){
+				que[tl++]=c1;
+				invld[c1]=1;
+			}
+		}
+		for(int i=1; i<=n; ++i){
+			if(!spos[i]) continue;
+			int p0=pos0[i],p1=pos1[i];
 			if(invld[p0]&&invld[p1]) return 0;
 			if(invld[p0]) G::add(i,i+n);
 			if(invld[p1]) G::add(i+n,i);
