@@ -82,8 +82,10 @@ namespace T{
 	}
 
 	void build(const int l,const int r){
+		const int k=idx(l,r);
+		tr[k].delta=0;
 		if(l==r){
-			tr[idx(l,r)].v=v-D.buk[l];
+			tr[k].v=v-D.buk[l];
 			return;
 		}
 		const int mid=(l+r)>>1;
@@ -119,7 +121,9 @@ namespace T{
 
 int solve(const int row,const int col){
 	static _pair stk_up[N],stk_dn[N];
+	static int minus[N<<1];
 	const int tot=D.tot;
+	memset(minus,0,sizeof(minus));
 	int top_up=0,top_dn=0;
 	T::tot=D.tot;
 	std::sort(pnt+1,pnt+n+1,cmp_x);
@@ -132,15 +136,17 @@ int solve(const int row,const int col){
 	for(int i=1; i<=n+1; ++i){
 		const int x=pnt[i].x,y=pnt[i].y;
 		apx(ans,T::qry()+D.buk[x]);
-		if(y>row>>1){
-			for(int d=stk_up[top_up].y-D.buk[y]; top_up&&d>=0; --top_up){
-				T::add(stk_up[top_up].x,x-1,-d);
+		if(D.buk[y]>row>>1){
+			T::add(stk_up[top_up].x,x-1,D.buk[y]-row);
+			for(int d=stk_up[top_up].y; top_up&&d>=D.buk[y]; d=stk_up[--top_up].y){
+				T::add(stk_up[top_up-1].x,stk_up[top_up].x-1,D.buk[y]-d);
 			}
 			stk_up[++top_up]=(_pair){x,D.buk[y]};
 		}
 		else{
-			for(int d=D.buk[y]-stk_dn[top_dn].y; top_dn&&d>=0; --top_dn){
-				T::add(stk_dn[top_dn].x,x-1,-d);
+			T::add(stk_dn[top_dn].x,x-1,-D.buk[y]);
+			for(int d=stk_dn[top_dn].y; top_dn&&d<=D.buk[y]; d=stk_dn[--top_dn].y){
+				T::add(stk_dn[top_dn-1].x,stk_dn[top_dn].x-1,d-D.buk[y]);
 			}
 			stk_dn[++top_dn]=(_pair){x,D.buk[y]};
 		}
@@ -149,14 +155,17 @@ int solve(const int row,const int col){
 }
 
 int main(){
-	row=nxi(),col=nxi();
+	col=nxi(),row=nxi();
 	n=nxi();
 	for(int i=1; i<=n; ++i){
 		pnt[i].x=nxi(),pnt[i].y=nxi();
+		if(!pnt[i].x||!pnt[i].y){
+			--i,--n;
+			continue;
+		}
 		D.insert(pnt[i].x);
 		D.insert(pnt[i].y);
 	}
-	D.insert(0);
 	D.insert(row);
 	D.insert(col);
 	D.build();
