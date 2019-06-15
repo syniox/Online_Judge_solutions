@@ -54,7 +54,7 @@ class mset{
 			int ls,rs,sz,v,w;
 			node(){w=rand();}
 		};
-		static node tr[(int)5e6+5];
+		static node tr[(int)3e6];
 		static int cnt;
 
 		inline void upd(const int k){
@@ -66,14 +66,13 @@ class mset{
 				r1=r2=0;
 				return;
 			}
-			const int sz_l=tr[tr[k].ls].sz;
-			if(sz_l>=v){
+			if(tr[k].v>v){
 				r2=k;
 				split(tr[k].ls,r1,tr[k].ls,v);
 			}
 			else{
 				r1=k;
-				split(tr[k].rs,tr[k].rs,r2,v-sz_l-1);
+				split(tr[k].rs,tr[k].rs,r2,v);
 			}
 			if(r1) upd(r1);
 			if(r2) upd(r2);
@@ -105,6 +104,7 @@ class mset{
 			int r1,r2;
 			split(rt,r1,r2,v);
 			tr[++cnt].v=v;
+			tr[cnt].sz=1;
 			merge(r1,r1,cnt);
 			merge(rt,r1,r2);
 		}
@@ -118,6 +118,8 @@ class mset{
 				for(q=r1; tr[tr[q].rs].rs; q=tr[q].rs){
 					--tr[q].sz;
 				}
+				--tr[q].sz;
+				assert(tr[tr[q].rs].v==v);
 				tr[q].rs=tr[tr[q].rs].ls;
 			}
 			merge(rt,r1,r2);
@@ -128,7 +130,7 @@ class mset{
 		}
 };
 int mset::cnt;
-mset::node mset::tr[(int)5e6+5];
+mset::node mset::tr[(int)3e6];
 
 namespace B{
 	mset tr[N];
@@ -172,12 +174,12 @@ namespace G{
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
 			if(y==f) continue;
-			ans[y]=calc(eg[i].wi)+1;
-			if(ans[y]==0) ans[y]=eg[i].cs;
-			B::add(eg[i].wi,ans[y]);
+			int res=calc(eg[i].wi);
+			res=res==-1?eg[i].cs:res+1;
+			ans[y]=ans[x]+res;
+			B::add(eg[i].wi,res);
 			dfs(y,x);
-			B::rem(eg[i].wi,ans[y]);
-			ans[y]+=ans[x];
+			B::rem(eg[i].wi,res);
 		}
 	}
 }
