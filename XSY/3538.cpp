@@ -21,10 +21,11 @@ namespace utils{
 using namespace utils;
 
 namespace G{
-	int cnt,fir[N],sz[N];
-	short dp[N][101][4],bot[N][101];
-	__int8_t dc_k[N][101][3],dc_b[N][101][3];
+	int cnt,fir[N],sz[N],fa[N];
+	short dp[N][501][3],bot[N][501],dc_k[N][501][3];
+	__int8_t dc_b[N][501][3];
 	int cans,rot1[N],rot2[N];
+	bool vis[N];
 	struct edge{
 		int to,nx;
 	}eg[N<<1];
@@ -32,6 +33,7 @@ namespace G{
 	inline void clear(){
 		cnt=cans=0;
 		memset(fir+1,0,n*sizeof(fir[0]));
+		memset(vis+1,0,n*sizeof(vis[0]));
 	}
 
 	inline void add(const int a,const int b){
@@ -39,59 +41,67 @@ namespace G{
 		fir[a]=cnt;
 	}
 
-	static short buk[N],fp[N][101][4];
 	void dfs_dp(const int x,const int f){
-		static __int8_t fr_k[N][101][4],use_k[N][101][4];
-		static __int8_t fr_b[N][101][4],use_b[N][101][4];
+		static short fr_k[N][501][3],use_k[N][501][3];
+		static __int8_t fr_b[N][501][3],use_b[N][501][3];
+		static short buk[N],fp[N][501][3];
 		int cnt=0;
 		sz[x]=1;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
-			if(y!=f){
-				dfs_dp(y,x);
-				sz[x]+=sz[y];
-			}
+			if(y==f) continue;
+			fa[y]=x;
+			dfs_dp(y,x);
+			sz[x]+=sz[y];
 		}
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
 			if(y!=f) buk[++cnt]=y;
 		}
 		buk[0]=x;
-		//memset(fp[0],-10,sizeof(fp[0]));
+		memset(fp[0],-10,sizeof(fp[0]));
 		fp[0][0][0]=0;
-		fp[0][1][0]=1;
+		fp[0][1][1]=1;
 		for(int i=1,s=1; i<=cnt; ++i){
-			s=std::min(q,s+sz[buk[i]]);
-			memset(fp[i],0,(s+1)*sizeof(fp[i][0]));
-			for(int j=1; j<=s-sz[buk[i]]+1; ++j){
-				//for(int k=std::max(0,j-sz[buk[i]]-1); k<=j; ++k){
-				for(int k=0; k<=j; ++k){
-					//不对接
-					for(int b1=0; b1<3; ++b1){
-						for(int b2=0; b2<3-b1; ++b2){
-							const int v=fp[i-1][k][b1]+dp[buk[i]][j-k][b2];
-							if(fp[i][j][b1]<v){
-								fp[i][j][b1]=v;
-								fr_k[i][j][b1]=k;
-								fr_b[i][j][b1]=b1;
-								use_k[i][j][b1]=j-k;
-								use_b[i][j][b1]=b2;
-							}
-						}
-					}
-					//对接
-					for(int b1=0; b1<2; ++b1){
-						const int v=fp[i-1][k][b1]+dp[buk[i]][j-k+(b1==1)][1];
-						if(fp[i][j][b1+1]<v){
-							fp[i][j][b1+1]=v;
-							fr_k[i][j][b1+1]=k;
-							fr_b[i][j][b1+1]=b1;
-							use_k[i][j][b1+1]=j-k+(b1==1);
-							use_b[i][j][b1+1]=1;
+			const int y=buk[i];
+			const int lim=std::min(q,s+sz[y]);
+			memset(fp[i],-10,(lim+1)*sizeof(fp[i][0]));
+			for(int j=0; j<=s; ++j){
+				//不对接
+				for(int k=0; k<=std::min(q-j,sz[y]); ++k){
+					int use=0;
+					if(dp[y][k][1]>dp[y][k][use]) use=1;
+					if(dp[y][k][2]>dp[y][k][use]) use=2;
+					const short v=dp[y][k][use];
+					for(int l=0; l<3; ++l){
+						if(fp[i][j+k][l]<fp[i-1][j][l]+v){
+							fp[i][j+k][l]=fp[i-1][j][l]+v;
+							use_k[i][j+k][l]=k;
+							use_b[i][j+k][l]=use;
+							fr_k[i][j+k][l]=j;
+							fr_b[i][j+k][l]=l;
 						}
 					}
 				}
+				//对接
+				for(int k=0; k<=std::min(q-j+1,sz[y]); ++k){
+					if(fp[i][j+k-1][2]<fp[i-1][j][1]+dp[y][k][1]){
+						fp[i][j+k-1][2]=fp[i-1][j][1]+dp[y][k][1];
+						use_k[i][j+k-1][2]=k;
+						use_b[i][j+k-1][2]=1;
+						fr_k[i][j+k-1][2]=j;
+						fr_b[i][j+k-1][2]=1;
+					}
+					if(fp[i][j+k][1]<fp[i-1][j][0]+dp[y][k][1]+1){
+						fp[i][j+k][1]=fp[i-1][j][0]+dp[y][k][1]+1;
+						use_k[i][j+k][1]=k;
+						use_b[i][j+k][1]=1;
+						fr_k[i][j+k][1]=j;
+						fr_b[i][j+k][1]=0;
+					}
+				}
 			}
+			s=std::min(q,s+sz[y]);
 		}
 		memcpy(dp[x],fp[cnt],(std::min(q,sz[x])+1)*sizeof(dp[x][0]));
 		for(int i=1; i<=std::min(q,sz[x]); ++i){
@@ -107,7 +117,7 @@ namespace G{
 		}
 		for(int i=1; i<=std::min(q,sz[x]); ++i){
 			int j=1;
-			while(j<=cnt&&dc_b[buk[j]][i][1]==0) ++j;
+			while(j<=cnt&&dc_b[buk[j]][i][1]!=1) ++j;
 			if(j>cnt){
 				bot[x][i]=x;
 			}
@@ -118,7 +128,6 @@ namespace G{
 	}
 
 	void dfs_rot(const int x,const int f,const int k,const int b){
-		static bool vis[N];
 		int p1=b==1?x:0,p2=0;
 		if(vis[x]) assert(b==1);
 		if(b&&!vis[x]){
@@ -126,6 +135,9 @@ namespace G{
 				const int y=eg[i].to;
 				if(y==f||dc_b[y][k][b]!=1) continue;
 				vis[y]=1;
+				for(int j=bot[y][dc_k[y][k][b]]; j!=y; j=fa[j]){
+					vis[j]=1;
+				}
 				if(p1) p2=bot[y][dc_k[y][k][b]];
 				else p1=bot[y][dc_k[y][k][b]];
 			}
@@ -169,6 +181,9 @@ int main(){
 			const int a=nxi(),b=nxi();
 			G::add(a,b);
 			G::add(b,a);
+		}
+		for(int i=1; i<=n; ++i){
+			memset(G::dp[i],-10,sizeof(G::dp[i]));
 		}
 		G::dfs_dp(1,0);
 		G::oput();
