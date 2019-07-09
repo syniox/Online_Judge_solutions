@@ -38,7 +38,7 @@ namespace U{
 }
 
 namespace T{
-	int x,v,tr[N];
+	int x,v,tr[N<<1];
 
 	inline int idx(const int l,const int r){
 		return (l+r)|(l!=r);
@@ -87,24 +87,28 @@ namespace T{
 }
 
 void link(const int x,const int y){
-	std::set <seg> ::iterator st2,st=sg.lower_bound((seg){x,0,0});
+	std::set <seg> ::iterator lst=sg.end(),st2,st=sg.lower_bound((seg){x,0,0});
 	T::mod(x,y);
 	if(st==sg.end()||st->p!=x) return;
 	int ql=st->l,qr=st->r;
+	bool flag=0;
 	for(int i=ql,j; i<=qr; i=j+1){
 		int p=T::qpos(1,n,i);
 		j=std::min(qr,T::val(p)-1);
 		if(p==st->p){
 			sg.erase(st);
-			sg.insert((seg){p,i,j});
-			st=sg.lower_bound((seg){x,0,0});
+			if(lst!=sg.end()) sg.insert(lst,(seg){p,i,j});
+			else lst=sg.insert((seg){p,i,j}).first;
+			flag=1;
 			continue;
 		}
 		if(i==ql&&st!=sg.begin()){
 			if(p==(--st)->p){
 				seg tmp=*st;
 				sg.erase(st++);
-				sg.insert((seg){tmp.p,tmp.l,j});
+				if(lst!=sg.end()) lst=sg.insert(lst,(seg){tmp.p,tmp.l,j});
+				else lst=sg.insert((seg){tmp.p,tmp.l,j}).first;
+				flag=1;
 				continue;
 			}
 			else ++st;
@@ -113,27 +117,40 @@ void link(const int x,const int y){
 			if((st2=sg.lower_bound((seg){p,0,0}))!=sg.end()&&st2->p==p){
 				seg tmp=*st2;
 				sg.erase(st2--);
-				sg.insert((seg){tmp.p,i,tmp.r});
+				if(lst!=sg.end()) lst=sg.insert(lst,(seg){tmp.p,i,tmp.r});
+				else lst=sg.insert((seg){tmp.p,i,tmp.r}).first;
 				if(j>=npos){
 					apn(ans,std::max(i,npos)-tmp.p+1);
 				}
 				continue;
 			}
 		}
-		sg.insert((seg){p,i,j});
+		if(lst!=sg.end()) lst=sg.insert(lst,(seg){p,i,j});
+		else lst=sg.insert((seg){p,i,j}).first;
 		if(j>=npos){
 			apn(ans,std::max(i,npos)-p+1);
 		}
 	}
+	if(!flag) sg.erase(st);
 }
 
 void merge(int x,int y){
 	x=U::find_rt(x),y=U::find_rt(y);
 	if(x==y) return;
-	used[std::max(x,y)]=1;
-	while(used[npos]) --npos;
-	if(conc[x].size()>conc[y].size()) std::swap(x,y);
+	if(x<y) std::swap(x,y);
+	if(conc[x].size()>conc[y].size()){
+		std::swap(conc[x],conc[y]);
+	}
 	U::fa[x]=y;
+	used[x]=1;
+	{
+		int lst_pos=npos;
+		while(used[npos]) --npos;
+		assert(npos>0);
+		for(int i=npos; i<lst_pos; ++i){
+			apn(ans,i-T::qpos(1,n,i)+1);
+		}
+	}
 	for(std::set <int> ::iterator it=conc[x].begin(); it!=conc[x].end(); ++it){
 		std::set <int> ::iterator des=conc[y].lower_bound(*it);
 		assert(*it!=*des);
@@ -144,8 +161,7 @@ void merge(int x,int y){
 			--des;
 			link(*des,*it);
 		}
-		conc[y].insert(*it);
-		//conc[y].insert(des,*it);
+		conc[y].insert(des,*it);
 	}
 	conc[x].clear();
 }
