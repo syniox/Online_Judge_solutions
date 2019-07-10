@@ -133,11 +133,14 @@ namespace T{
 
 	lint qmax_t(const int l,const int r){
 		if(l==r){
+			if(tr[idx(l,r)].l!=l) return -1;
 			//assert(tr[idx(l,r)].l==l&&tr[idx(l,r)].r==r);
 			return get_area(v[l],p);
 		}
 		const int mid=(l+r)>>1;
-		if(get_area(v[tr[idx(l,mid)].r],p)>=get_area(v[tr[idx(mid+1,r)].l],p)){
+		if(tr[idx(mid+1,r)].l==n) return qmax_t(l,mid);
+		if(tr[idx(l,mid)].r==-1) return qmax_t(mid+1,r);
+		if(get_area(v[tr[idx(l,mid)].r],p)>get_area(v[tr[idx(mid+1,r)].l],p)){
 			return qmax_t(l,mid);
 		}
 		return qmax_t(mid+1,r);
@@ -178,9 +181,10 @@ double get_rm_t(const _pair a,const _pair b,const _pair c){
 	return crsp(k1,b1,k2,b2);
 }
 
-_data get_data(const _pair* v,const int p,int lst,int nxt){
-	if(!lst) lst=T::qlst_t(0,n-1,p);
-	if(!nxt) nxt=T::qnxt_t(0,n-1,p);
+_data get_data(const _pair* v,const int n,const int p,int lst,int nxt){
+	if(lst==-1) lst=T::qlst_t(0,n-1,p);
+	if(nxt==-1) nxt=T::qnxt_t(0,n-1,p);
+	assert(lst>=0&&lst<p&&nxt<n&&nxt>p);
 	return (_data){p,get_rm_t(v[lst],v[p],v[nxt])};
 }
 
@@ -202,36 +206,47 @@ void solve(std::vector <_pair> &seg,std::vector <_qry> &qry){
 			seg[cnt++]=seg[i];
 		}
 	}
+	for(int i=0; i<cnt; ++i){
+		rm_tm[i]=2e9;
+	}
 	seg.resize(cnt);
 	T::init(seg.data(),cnt,1);
-	for(int i=1; i<(int)seg.size()-1; ++i){
+	for(int i=1; i<cnt-1; ++i){
 		double r=get_rm_t(seg[i-1],seg[i],seg[i+1]);
 		pq.push((_data){i,r});
 	}
-	while(pq.size()>2){
+	while(!pq.empty()){
 		_data dt=pq.top();
 		pq.pop();
 		int p1=T::qlst_t(0,cnt-1,dt.x);
 		int p2=T::qnxt_t(0,cnt-1,dt.x);
-		if(get_rm_t(seg[p1],seg[dt.x],seg[p2])!=dt.rm_t){
+		if(dt.rm_t<seg[dt.x].x||get_rm_t(seg[p1],seg[dt.x],seg[p2])!=dt.rm_t){
 			continue;
 		}
 		rm_tm[dt.x]=dt.rm_t;
-		pq.push(get_data(seg.data(),p1,0,p2));
-		pq.push(get_data(seg.data(),p2,p1,0));
+		T::rm(dt.x);
+		if(p1!=0){
+			pq.push(get_data(seg.data(),cnt,p1,-1,p2));
+		}
+		if(p2!=cnt-1){
+			pq.push(get_data(seg.data(),cnt,p2,p1,-1));
+		}
+	}
+	for(int i=1; i<cnt-1; ++i){
+		assert(rm_tm[i]>seg[i].x);
 	}
 	while(!pq.empty()) pq.pop();
 	T::init(seg.data(),cnt,0);
 	for(int i=0,j=0; i<(int)qry.size(); ++i){
-		for(; seg[j].x<=qry[i].x&&j<(int)seg.size(); ++j){
+		for(; seg[j].x<=qry[i].x&&j<cnt; ++j){
 			T::add(j);
-			if(j&&j!=(int)seg.size()-1){
+			if(j&&j!=cnt-1){
 				pq.push((_data){j,rm_tm[j]});
 			}
 		}
 		while(!pq.empty()){
 			_data dt=pq.top();
-			if(dt.rm_t>i) break;
+			if(dt.rm_t>qry[i].x) break;
 			pq.pop();
 			T::rm(dt.x);
 		}
