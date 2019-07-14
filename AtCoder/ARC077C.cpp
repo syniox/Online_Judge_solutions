@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cassert>
 typedef long long lint;
-const int N=1e5+5;
+const int N=2e5+5;
 int n,val[N];
 
 namespace utils{
