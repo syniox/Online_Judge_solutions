@@ -162,10 +162,8 @@ namespace G{
 }
 
 int main(){
-#ifndef LOCAL
 	freopen("return.in","r",stdin);
 	freopen("return.out","w",stdout);
-#endif
 	for(int cas=nxi(); cas; --cas){
 		n=nxi(),m=nxi();
 		U::clear();
