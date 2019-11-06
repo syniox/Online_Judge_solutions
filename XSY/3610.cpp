@@ -35,7 +35,7 @@ namespace G{
 
 namespace L{
 	using namespace G;
-	int dfn[N],idx[N],top[N],sz[N],fa[N],son[N],dep[N];
+	int dfn[N*2],idx[N*2],top[N*2],sz[N*2],fa[N*2],son[N*2],dep[N*2];
 
 	void dfs_son(const int x){
 		sz[x]=1;
@@ -82,14 +82,15 @@ namespace L{
 	}
 
 	int get_mid(const int x,const int y){
-		const int d=get_dis(x,y);
+		const int d=get_dis(x,y)>>1;
 		return dep[x]>dep[y]?jmp(x,d):jmp(y,d);
 	}
 }
 
 namespace T{
 	using namespace G;
-	int cur_sz,rt,xsz,sz[N*2],fa[N*2][18],dis[N*2][18],totf[N*2],dep[N*2],xdep[N*2];
+	int cur_sz,rt,xsz,sz[N*2];
+	int fa[N*2][18],dis[N*2][18],totf[N*2],depf[N*2],dep[N*2],xdep[N*2];
 	int *anss[N*2],*ansf[N*2],*sbuk[N*2];
 	bool vis[N*2];
 
@@ -118,17 +119,19 @@ namespace T{
 		fa[x][++totf[x]]=rt;
 		dis[x][totf[x]]=dep[x];
 		xdep[x]=dep[x];
+		sz[x]=1;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
 			if(vis[y]||y==f) continue;
 			dep[y]=dep[x]+1;
 			dfs_xdep(y,x);
 			apx(xdep[x],xdep[y]);
+			sz[x]+=sz[y];
 		}
 	}
 
 	void dfs_ans(const int x,const int f){
-		++sbuk[rt][dep[x]];
+		sbuk[rt][dep[x]]+=x<=n;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
 			if(!vis[y]&&y!=f) dfs_ans(y,x);
@@ -142,14 +145,20 @@ namespace T{
 		dfs_xdep(x,x);
 		anss[x]=new int[xdep[x]+1];
 		sbuk[x]=new int[xdep[x]+1];
+		assert(anss[x]);
+		assert(sbuk[x]);
 		memset(anss[x],0,(xdep[x]+1)*sizeof(int));
 		memset(sbuk[x],0,(xdep[x]+1)*sizeof(int));
+		anss[x][0]=x<=n;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			int y=eg[i].to,d=xdep[y];
 			if(vis[y]) continue;
+			assert(d<=xdep[x]);
+			memset(sbuk[x],0,(d+1)*sizeof(int));
 			rt=x;
 			dfs_ans(y,x);
 			y=build(y,sz[y]);
+			depf[y]=d;
 			ansf[y]=new int[d+1];
 			ansf[y][0]=sbuk[x][0];
 			for(int i=1; i<=d; ++i){
@@ -163,22 +172,23 @@ namespace T{
 		if(sbuk[x]!=0){
 			delete[] sbuk[x];
 		}
-		return 0;
+		return x;
 	}
 
 	int qans(int x,const int d){
+		if(d<0) return 0;
 		int ans=anss[x][std::min(xdep[x],d)];
 		for(int i=totf[x]-1; i; --i){
+			if(d<dis[x][i]) continue;
 			const int dep=std::min(xdep[fa[x][i]],d-dis[x][i]);
 			ans+=anss[fa[x][i]][dep];
-			ans-=ansf[fa[x][i+1]][dep];
+			ans-=ansf[fa[x][i+1]][std::min(depf[fa[x][i+1]],dep)];
 		}
 		return ans;
 	}
 }
 
 int main(){
-	freopen("d.in","r",stdin);
 	n=nxi(),q=nxi();
 	for(int i=1; i<n; ++i){
 		const int a=nxi(),b=nxi();
@@ -189,8 +199,8 @@ int main(){
 	T::build(1,n);
 	for(int ans=0,i=1; i<=q; ++i){
 		const int a=(nxi()+ans)%n+1,b=(nxi()+ans)%n+1,d=(nxi()+ans)%n;
-		const int m=L::get_mid(a,b);
-		printf("%d\n",ans=T::qans(a,d*2)-T::qans(b,d*2)-T::qans(m,d));
+		const int l=L::get_dis(a,b),m=L::get_mid(a,b);
+		printf("%d\n",ans=T::qans(a,d*2)+T::qans(b,d*2)-T::qans(m,d*2-l/2));
 	}
 	return 0;
 }
