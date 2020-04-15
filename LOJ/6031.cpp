@@ -85,6 +85,20 @@ namespace S{
 		dfs_lk(0);
 	}
 
+	lint sol_s(const char *str){
+		int l=nxi()+1,r=nxi()+1,n=strlen(str+1);
+		lint ans=0;
+		for(int i=1; i<=n; ++i){
+			int p=0;
+			for(int j=i; j<=n; ++j){
+				p=tr[p].c[str[j]-'a'];
+				if(p==0) break;
+				ans+=(lint)tr[p].sz*getsum(mpos[i][j],l,r);
+			}
+		}
+		return ans;
+	}
+
 	lint sol_b(const char *str){
 		static std::vector <int> buk[N];
 		int p=0,l=nxi()+1,r=nxi()+1,n=strlen(str+1);
@@ -102,8 +116,13 @@ namespace S{
 			}
 		}
 		for(int len=0,i=1; i<=n; ++i){
-			p=tr[p].c[str[i]-'a'];
-			len=std::min(len+1,tr[p].len);
+			int c=str[i]-'a';
+			for(; ~p&&!tr[p].c[c]; p=tr[p].lk[0]);
+			if(~p){
+				len=std::min(len,tr[p].len)+1;
+				p=tr[p].c[c];
+			}
+			else len=p=0;
 			int q=p;
 			for(std::vector <int> ::iterator it=buk[i].begin(); it!=buk[i].end(); ++it){
 				if(len<=i-*it) continue;
@@ -114,20 +133,6 @@ namespace S{
 					}
 				}
 				ans+=tr[q].sz;
-			}
-		}
-		return ans;
-	}
-
-	lint sol_s(const char *str){
-		int l=nxi()+1,r=nxi()+1,n=strlen(str+1);
-		lint ans=0;
-		for(int i=1; i<=n; ++i){
-			int p=0;
-			for(int j=i; j<=n; ++j){
-				p=tr[p].c[str[j]-'a'];
-				if(p==0) break;
-				ans+=(lint)tr[p].sz*getsum(mpos[i][j],l,r);
 			}
 		}
 		return ans;
@@ -144,7 +149,7 @@ int main(){
 	for(int i=1; i<=m; ++i){
 		seg[i].first=nxi()+1,seg[i].second=nxi()+1;
 	}
-	//if(u<=B){
+	if(u<=B){
 		for(int i=1; i<=m; ++i){
 			mpos[seg[i].first][seg[i].second].push_back(i);
 		}
@@ -152,7 +157,6 @@ int main(){
 			scanf("%s",str+1);
 			printf("%lld\n",S::sol_s(str));
 		}
-	/*
 	}
 	else{
 		for(int i=1; i<=q; ++i){
@@ -160,6 +164,5 @@ int main(){
 			printf("%lld\n",S::sol_b(str));
 		}
 	}
-	*/
 	return 0;
 }
