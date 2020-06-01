@@ -14,43 +14,50 @@ namespace utils{
 		lint x=0;
 		char c;
 		while(((c=getchar())>'9'||c<'0')&&c!='-');
-		const bool f=(c=='-')&&(c=getchar());
+		const bool f=c=='-'&&(c=getchar());
 		while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
 		return f?-x:x;
 	}
 }
 using namespace utils;
 
-bool jdg(const lint lim){
-	static lint dp[N+1][N+8];
+bool jdg(const lint tgt){
+	static lint dp[N+1][N+5];//i位以上，j个自由位时最少借位数
 	memset(dp,30,sizeof(dp));
 	dp[N][0]=0;
 	for(int i=N; i; --i){
-		for(int j=0; j<=N-i+5; ++j){
-			if(dp[i][j]>1ll<<60) continue;
-			lint req=dp[i][j]*2+buk[i-1];
-			lint use=std::min(lim>>i&1?n:(lint)j,req);
-			use-=(use&1)^(q&1);
-			lint nx_j=n-std::max(j,use)+j;
-			if(j>=3){
-
+		for(int j=0; j<N-i+5; ++j){
+			const lint cur=dp[i][j],req=cur*2+buk[i-1];
+			if(cur>1ll<<60) continue;
+			if(tgt>>(i-1)&1){
+				lint use=std::min(req,n-((n^req)&1));
+				lint nx_j=n-std::max(use,(lint)j)+j;
+				if(req-use==0&&nx_j>=3) return 1;
+				for(; use>=0&&nx_j<=n; use-=2,nx_j+=2){
+					if(nx_j-j>=2&&nx_j>=5) break;
+					apn(dp[i-1][nx_j],req-use);
+				}
 			}
-			//apn(dp[i-1][nx_j],req-use);
+			else{
+				lint use=std::min(req,j-((j^req)&1));
+				if(use<0) continue;
+				if(j>2&&use==req) return 1;
+				apn(dp[i-1][j],req-use);
+			}
 		}
 	}
-	for(int i=std::min((lint)N,n); ~i; --i){
-		if(dp[0][i]==0) return 1;
+	for(int i=0; i<N+5; ++i){
+		if(!dp[0][i]) return 1;
 	}
 	return 0;
 }
 
 lint rmain(){
 	n=nxi(),s=nxi(),q=nxi();
-	if(s<q||((s-q)&1)) return -1;
-	if(n==1) return s==q?s:-1;
-	if(n==2) return (!q)&&s%2==0?s>>1:-1;
-	for(int i=N-1; ~i; --i){
-		buk[i]=(q>>i&1)+((s-q)>>(i+1))*2;
+	if(s<q||(s-q)&1) return -1;
+	for(int i=0; i<N; ++i){
+		buk[i]=(q>>i&1)+2*((s-q)>>(i+1)&1);
+		if(buk[i]>n) return -1;
 	}
 	lint l=s/n,r=s,mid;
 	while(l!=r){
