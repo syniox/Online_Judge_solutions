@@ -36,7 +36,7 @@ inline void init(){
 		fac[i]=(lint)fac[i-1]*i%mod;
 	}
 	ifac[q]=fpow(fac[q],mod-2)%mod;
-	for(int i=q-1; i; --i){
+	for(int i=q; i; --i){
 		ifac[i-1]=(lint)ifac[i]*i%mod;
 	}
 }
@@ -129,13 +129,13 @@ namespace G{
 		sz[e]=1;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
-			if(!sz[y]) dfs_dp(y,i),sz[e]+=sz[i];
+			if(i!=(e^1)) dfs_dp(y,i),sz[e]+=sz[i];
 		}
 		sz[e^1]=n-sz[e];
 		int top=0;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			buk[top++]=i;
-			int x=top;
+			int x=top-1;
 			if(pol[x]) delete[] pol[x];
 			pol[x]=new int[2];
 			pol[x][0]=1,pol[x][1]=sz[i];
@@ -161,7 +161,7 @@ namespace G{
 			dp[buk[i]^1]=res;
 		}
 		for(int i=fir[x]; i; i=eg[i].nx){
-			if(i!=e) sdp[x]=((lint)sdp[x]+dp[i]+sdp[eg[i].to])%mod;
+			if(i!=(e^1)) sdp[x]=((lint)sdp[x]+dp[i]+sdp[eg[i].to])%mod;
 		}
 	}
 
@@ -194,6 +194,10 @@ namespace G{
 
 int main(){
 	n=nxi(),q=nxi();
+	if(q==1){
+		printf("%lld\n",(lint)n*(n-1)%mod*fpow(2,mod-2)%mod);
+		return 0;
+	}
 	init();
 	for(int i=1; i<n; ++i){
 		const int a=nxi(),b=nxi();
@@ -202,7 +206,7 @@ int main(){
 	}
 	G::dfs_dp(1,0);
 	G::dfs_ans1(1,0);
-	ans=(lint)ans*fpow(ans,2)%mod;
+	ans=(lint)ans*ifac[2]%mod;//inv2
 	G::dfs_ans2(1,0);
 	printf("%d\n",(ans+mod)%mod);
 	return 0;
