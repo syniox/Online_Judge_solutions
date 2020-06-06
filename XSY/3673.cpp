@@ -82,33 +82,34 @@ void get_vld(){
 	const int invB=922042494;
 	static int pwb[N],d[N];
 	memset(vld,1,n*sizeof(bool));
+	memset(des,-1,sizeof(des));
 	pwb[0]=1;
 	for(int i=1; i<=n; ++i){
-		pwb[i]=(lint)pwb[i-1]*i%mod;
+		pwb[i]=(lint)pwb[i-1]*B%mod;
 	}
 	for(int i=0; i<26; ++i){
 		if(!cbs[i]) continue;
 		int hsh_s=0;
 		for(int j=0; j<cbs[i]; ++j){
 			d[j]=bs[i][(j+1)%cbs[i]]-bs[i][j]+(j+1==cbs[i])*n;
-			hsh_s=(hsh_s+(lint)B*d[j])%mod;
+			hsh_s=((lint)hsh_s*B+d[j])%mod;
 		}
 		for(int j=0; j<26; ++j){
 			if(cbs[i]!=cbt[j]) continue;
-			int hsh_t=0;
+			int cl=cbs[i],hsh_t=0,hs=hsh_s;
 			for(int k=0; k<cbt[j]; ++k){
-				int d=bt[j][(k+1)%cbt[j]]-bt[j][k]+(k+1==cbt[j])*n;
-				hsh_t=(hsh_t+(lint)B*d)%mod;
+				int d=bt[j][(k+1)%cl]-bt[j][k]+(k+1==cl)*n;
+				hsh_t=((lint)hsh_t*B+d)%mod;
 			}
-			int step=-1;//最后一个对应的位置
-			for(int k=1,hs=hsh_s; step==-1&&k<=cbs[i]; ++k){
-				if(hsh_s==hsh_t) step=cbs[i]-k;
-				int td=d[cbs[i]-k];
-				hs=(lint)(hs-td)*invB%mod;
-				hs=(hs+(lint)td*(pwb[cbs[i]]-1))%mod;
+			for(int l=0; l<cbs[i]; ){
+				if(hs==hsh_t){
+					int t=(bs[i][(cl-l)%cl]-bt[j][0]+n)%n;
+					des[t][i]=j;
+				}
+				++l;
+				hs=(lint)(hs-d[cl-l])*invB%mod;
+				hs=(hs+(lint)d[cl-l]*pwb[cl-1])%mod;
 			}
-			if(step==-1) continue;
-			des[(bs[i][step]-bt[j][cbt[j]-1]+n)%n][i]=j;
 		}
 	}
 }
@@ -131,6 +132,8 @@ lint solve(const int t,const int step){
 	}
 	for(int i=top; i>1; --i){
 		lint p1,p2;
+		if((qr[i-1]-qr[i])%gcd(req[i],req[i-1]))
+			return 2e18;
 		exgcd(p1,p2,req[i],-req[i-1],qr[i-1]-qr[i]);
 		lint lm=lcm(req[i],req[i-1]),res=((p1*req[i]+qr[i])%lm+lm)%lm;
 		req[i-1]=lm,qr[i-1]=res;
