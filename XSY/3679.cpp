@@ -41,7 +41,7 @@ namespace T{
 	bool f;
 	struct node{
 		int un,ux,dn,dx;
-		//最小上界，最大上界，最小下界，最大下界(闭区间)
+		//最小上界，最大上界，最小下界，最大下界(开区间)
 		bool rev;
 		node(){
 			un=ux=dn=dx=-1;
@@ -53,9 +53,10 @@ namespace T{
 			std::swap(dx,ux);
 		}
 		void set(const int v,const bool f){
+			//1下界0上界
 			un=ux=dn=dx=-1;
-			if(f==1) dn=dx=v+1;
-			else un=ux=v-1;
+			if(f==1) dn=dx=v;
+			else un=ux=v;
 		}
 		friend node operator * (const node &a,const node &b){
 			node c;
@@ -73,7 +74,7 @@ namespace T{
 			}
 			return c;
 		}
-	}tr[N];
+	}tr[N<<1];
 
 	inline int idx(const int l,const int r){
 		return (l+r)|(l!=r);
@@ -122,7 +123,7 @@ namespace T{
 		const int mid=(l+r)>>1;
 		node p;
 		if(x<=mid) p=p*ask_t(l,mid);
-		if(x>mid) p=p*ask_t(mid+1,r);
+		if(y>mid) p=p*ask_t(mid+1,r);
 		return p;
 	}
 
@@ -131,6 +132,7 @@ namespace T{
 			tr[idx(l,r)].getrev();
 			return;
 		}
+		psh(l,r);
 		const int mid=(l+r)>>1;
 		if(x<=mid) revseg_t(l,mid);
 		if(y>mid) revseg_t(mid+1,r);
@@ -177,14 +179,14 @@ namespace G{
 		if(!son[x]) return;
 		dfs_top(son[x]);
 		for(int i=0; i<2; ++i){
-			if(!dfn[ch[x][i]]) dfs_top(ch[x][i]);
+			if(ch[x][i]&&!dfn[ch[x][i]]) dfs_top(ch[x][i]);
 		}
 	}
 
 	void pshrev(const int x){
 		int l=dfn[x],r=dfn[x]+sz[x]-1;
 		B::revseg(l,r);
-		T::revseg(l,r);
+		if(l<r) T::revseg(l+1,r);
 	}
 
 	bool ask(const int x){
@@ -192,8 +194,8 @@ namespace G{
 		for(int i=x; i; i=fa[top[i]]){
 			p=p*T::ask(dfn[top[i]],dfn[i]);
 		}
-		if(~p.dx&&val[x]<p.dx) return 0;
-		if(~p.un&&val[x]>p.un) return 0;
+		if(~p.dx&&val[x]<=p.dx) return 0;
+		if(~p.un&&val[x]>=p.un) return 0;
 		return 1;
 	}
 }
@@ -214,8 +216,8 @@ int main(){
 			int x=nxi(),v=nxi(),rev=B::ask(G::dfn[x]);
 			int ls=G::ch[x][rev],rs=G::ch[x][rev^1];
 			val[x]=v;
-			if(ls) T::apl(G::dfn[ls],v,rev);
-			if(rs) T::apl(G::dfn[rs],v,rev^1);
+			if(ls) T::apl(G::dfn[ls],v,0);
+			if(rs) T::apl(G::dfn[rs],v,1);
 		}else if(op==2){
 			G::pshrev(nxi());
 		}else{
