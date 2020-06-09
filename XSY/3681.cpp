@@ -3,8 +3,9 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+typedef const int cint;
 typedef long long lint;
-const int N=1e5+5;
+cint N=1e5+5;
 int n,m,val[N];
 bool ol;
 
@@ -24,24 +25,24 @@ using namespace utils;
 
 namespace U{
 	int fa[N<<1];
-	int find_rt(const int x){
+	int find_rt(cint x){
 		return fa[x]?fa[x]=find_rt(fa[x]):x;
 	}
 }
 
 namespace KST{
-	int cnt,fir[N<<1],fa[N<<1],val[N<<1],val_d[N<<1],nsum[N<<1];
+	int rt,cnt,fir[N<<1],fa[N<<1],val[N<<1],val_d[N<<1],nsum[N<<1];
 	int sz[N<<1],son[N<<1],top[N<<1],dfn[N<<1],idx[N<<1];
 	struct edge{
 		int to,nx;
 	}eg[N<<1];
-	inline void add(const int a,const int b){
+	inline void add(cint a,cint b){
 		fa[b]=a;
 		eg[++cnt]=(edge){b,fir[a]};
 		fir[a]=cnt;
 	}
 
-	void dfs_top(const int x){
+	void dfs_top(cint x){
 		static int cnd;
 		top[x]=son[fa[x]]==x?top[fa[x]]:x;
 		val_d[dfn[x]=++cnd]=val[x];
@@ -60,22 +61,22 @@ namespace KST{
 		dfs_top(rt);
 	}
 
-	void getrng(int x,const int d,int &x,int &y){
+	void getrng(int x,cint d,int &l,int &r){
 		assert(x<=n);
 		for(; val[fa[top[x]]]>=d; x=fa[top[x]]);
-		int l=dfn[top[x]],r=dfn[x],mid;
+		l=dfn[top[x]],r=dfn[x];
 		while(l!=r){
-			mid=(l+r)>>1;
+			int mid=(l+r)>>1;
 			if(val_d[mid]<d) l=mid+1;
 			else r=mid;
 		}
 		l=idx[l],r=dfn[l]+sz[l]-1,l=dfn[l];
-		x=nsum[l-1]+1,y=nsum[r];
+		l=nsum[l-1]+1,r=nsum[r];
 	}
 }
 
 namespace G{
-	int cnt,fir[N],dfn[N];
+	int cnt,sz[N],fir[N],dfn[N];
 	struct edge{
 		int to,nx;
 	}eg[N<<1];
@@ -85,7 +86,7 @@ namespace G{
 			return a.v<b.v;
 		}
 	}e[N];
-	inline void add(const int a,const int b,const int v){
+	inline void add(cint a,cint b,cint v){
 		eg[++cnt]=(edge){b,fir[a]};
 		fir[a]=cnt;
 		eg[++cnt]=(edge){a,fir[b]};
@@ -106,22 +107,22 @@ namespace G{
 		}
 		KST::rt=tot;
 	}
-	void dfs_dfn(const int x){
+	void dfs_dfn(cint x){
 		static int cnd;
 		dfn[x]=++cnd;
 		sz[x]=1;
 		for(int i=fir[x]; i; i=eg[i].nx){
-			const int y=eg[i].to;
+			cint y=eg[i].to;
 			if(!dfn[y]) dfs_dfn(y),sz[x]+=sz[y];
 		}
 	}
-	void getrng(const int x,int &l,int &r){
+	void getrng(cint x,int &l,int &r){
 		l=dfn[x],r=dfn[x]+sz[x]-1;
 	}
 }
 
 namespace KDT{
-	int rt,idx[N];
+	int v,rt,idx[N],ql[2],qr[2];
 	bool curd;
 	struct node{
 		int id,v[2],wx[2],wn[2],ls,rs,fa;
@@ -130,11 +131,33 @@ namespace KDT{
 			return a.v[curd]<b.v[curd];
 		}
 	}tr[N<<1];
-	void upd(const int k){
+	void upd(cint k){
+		node *p=tr+k;
 		int ls=tr[k].ls,rs=tr[k].rs;
+		for(int i=0; i<2; ++i){
+			p->wx[i]=p->wn[i]=p->v[i];
+			if(ls){
+				apn(p->wn[i],tr[ls].wn[i]);
+				apx(p->wx[i],tr[ls].wx[i]);
+			}
+			if(rs){
+				apn(p->wn[i],tr[rs].wn[i]);
+				apx(p->wx[i],tr[rs].wx[i]);
+			}
+		}
 	}
-	int build_tr(const int l,const int r){
-		const int mid=(l+r+1)>>1;
+	bool bel(int *ql,int *qr,int *wl,int *wr){
+		if(ql[0]<wl[0]||qr[0]>wr[0]) return 0;
+		if(ql[1]<wl[1]||qr[1]>wr[1]) return 0;
+		return 1;
+	}
+	bool mut(int *l1,int *r1,int *l2,int *r2){
+		if(l1[0]>r2[0]||l2[0]<r1[0]) return 0;
+		if(l1[1]>r2[1]||l2[1]<r1[1]) return 0;
+		return 1;
+	}
+	int build_tr(cint l,cint r){
+		cint mid=(l+r+1)>>1;
 		std::nth_element(tr+l,tr+mid,tr+r);
 		curd^=1;
 		int ls=l==mid?0:build_tr(l,mid-1);
@@ -142,18 +165,36 @@ namespace KDT{
 		if(ls) tr[tr[mid].ls=ls].fa=mid;
 		if(rs) tr[tr[mid].rs=rs].fa=mid;
 		upd(mid);
+		idx[tr[mid].id]=mid;
 		curd^=1;
+		return mid;
+	}
+	void mdf_t(cint k){
+		if(bel(tr[k].wn,tr[k].wx,ql,qr)){
+			tr[k].tag+=v;
+			return;
+		}
+		node *ls=tr+tr[k].ls,*rs=tr+tr[k].rs;
+		if(ls!=tr&&mut(ls->wn,ls->wx,ql,qr))
+			mdf_t(ls-tr);
+		if(rs!=tr&&mut(rs->wn,rs->wx,ql,qr))
+			mdf_t(rs-tr);
+	}
+	void mdf(cint l0,cint r0,cint l1,cint r1,cint v){
+		ql[0]=l0,qr[0]=r0,ql[1]=l1,qr[1]=r1;
+		KDT::v=v;
+		mdf_t(rt);
 	}
 	void build(){
 		for(int i=1; i<=n; ++i){
 			int dg=G::dfn[i],dk=KST::nsum[KST::dfn[i]];
-			tr[i]=(node){i,[dg,dk]};
+			tr[i]=(node){i,{dg,dk}};
 		}
 		rt=build_tr(1,n);
 	}
 	lint qry(int x){
 		lint ans=0;
-		for(; x; x=tr[x].fa){
+		for(x=idx[x]; x; x=tr[x].fa){
 			ans+=tr[x].tag;
 		}
 		return ans;
@@ -173,11 +214,15 @@ int main(){
 	G::dfs_dfn(1);
 	KST::build();
 	KDT::build();
-	for(int i=1; i<=n; ++i){
+	for(int ans,i=1; i<=m; ans*=ol,++i){
 		if(nxi()==1){
-			KDT::qry(nxi());
+			printf("%d\n",ans=KDT::qry((nxi()+ans-1)%n+1));
 		}else{
-
+			int v=nxi(),d=nxi(),x=(nxi()+ans-1)%n+1;
+			int kl,kr,gl,gr;
+			KST::getrng(x,d,kl,kr);
+			G::getrng(x,gl,gr);
+			KDT::mdf(kl,kr,gl,kr,v);
 		}
 	}
 	return 0;
