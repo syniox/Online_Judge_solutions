@@ -6,7 +6,8 @@
 typedef const int cint;
 typedef long long lint;
 cint N=1e5+5;
-int n,m,val[N];
+int n,m;
+lint val[N];
 bool ol;
 
 namespace utils{
@@ -83,7 +84,7 @@ namespace G{
 	struct eg2{
 		int a,b,v;
 		friend bool operator < (const eg2 &a,const eg2 &b){
-			return a.v<b.v;
+			return a.v>b.v;
 		}
 	}e[N];
 	inline void add(cint a,cint b,cint v){
@@ -127,7 +128,7 @@ namespace KDT{
 	struct node{
 		int id,v[2],wx[2],wn[2],ls,rs,fa;
 		lint tag;
-		friend bool operator < (node &a,node &b){
+		friend bool operator < (const node &a,const node &b){
 			return a.v[curd]<b.v[curd];
 		}
 	}tr[N<<1];
@@ -151,14 +152,19 @@ namespace KDT{
 		if(ql[1]<wl[1]||qr[1]>wr[1]) return 0;
 		return 1;
 	}
+	bool bel(int *v,int *wl,int *wr){
+		if(v[0]>wr[0]||v[0]<wl[0]) return 0;
+		if(v[1]>wr[1]||v[1]<wl[1]) return 0;
+		return 1;
+	}
 	bool mut(int *l1,int *r1,int *l2,int *r2){
-		if(l1[0]>r2[0]||l2[0]<r1[0]) return 0;
-		if(l1[1]>r2[1]||l2[1]<r1[1]) return 0;
+		if(l1[0]>r2[0]||r1[0]<l2[0]) return 0;
+		if(l1[1]>r2[1]||r1[1]<l2[1]) return 0;
 		return 1;
 	}
 	int build_tr(cint l,cint r){
 		cint mid=(l+r+1)>>1;
-		std::nth_element(tr+l,tr+mid,tr+r);
+		std::nth_element(tr+l,tr+mid,tr+r+1);
 		curd^=1;
 		int ls=l==mid?0:build_tr(l,mid-1);
 		int rs=r==mid?0:build_tr(mid+1,r);
@@ -174,6 +180,9 @@ namespace KDT{
 			tr[k].tag+=v;
 			return;
 		}
+		if(bel(tr[k].v,ql,qr)){
+			val[tr[k].id]+=v;
+		}
 		node *ls=tr+tr[k].ls,*rs=tr+tr[k].rs;
 		if(ls!=tr&&mut(ls->wn,ls->wx,ql,qr))
 			mdf_t(ls-tr);
@@ -188,7 +197,7 @@ namespace KDT{
 	void build(){
 		for(int i=1; i<=n; ++i){
 			int dg=G::dfn[i],dk=KST::nsum[KST::dfn[i]];
-			tr[i]=(node){i,{dg,dk}};
+			tr[i]=(node){i,{dk,dg}};
 		}
 		rt=build_tr(1,n);
 	}
@@ -214,15 +223,17 @@ int main(){
 	G::dfs_dfn(1);
 	KST::build();
 	KDT::build();
-	for(int ans,i=1; i<=m; ans*=ol,++i){
+	lint ans=ol-1;
+	for(int i=1; i<=m; ans=ol?ans:-1,++i){
 		if(nxi()==1){
-			printf("%d\n",ans=KDT::qry((nxi()+ans-1)%n+1));
+			int x=(nxi()+ans)%n+1;
+			printf("%lld\n",ans=val[x]+KDT::qry(x));
 		}else{
-			int v=nxi(),d=nxi(),x=(nxi()+ans-1)%n+1;
+			int v=nxi(),d=nxi(),x=(nxi()+ans)%n+1;
 			int kl,kr,gl,gr;
 			KST::getrng(x,d,kl,kr);
 			G::getrng(x,gl,gr);
-			KDT::mdf(kl,kr,gl,kr,v);
+			KDT::mdf(kl,kr,gl,gr,v);
 		}
 	}
 	return 0;
