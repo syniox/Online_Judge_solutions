@@ -3,14 +3,15 @@
 #include <cstring>
 #include <cassert>
 #include <vector>
+#include <fstream>
 #include <set>
 typedef long long lint;
 const int N=3e5+5;
-int n,ans,fl[N],pos[N];
+int n,ans,fl[N],pos[N],lg2[N<<1];
 char str[N];
 
 namespace utils{
-#define eprintf(fmt,...) fprintf(stderr,fmt,__VA_ARGS__)
+#define eprintf(fmt,...) fprintf(stderr,fmt,##__VA_ARGS__)
 	template <class T> inline void apn(T &x,const T y){x=x<y?x:y;}
 	template <class T> inline void apx(T &x,const T y){x=x>y?x:y;}
 	inline int nxi(){
@@ -25,8 +26,8 @@ namespace utils{
 using namespace utils;
 
 void manacher(){
-	static char s[N<<1];
-	static int pr[N<<1];
+	char *s=new char[N<<1];
+	int *pr=new int[N<<1];
 	memset(fl,10,sizeof(fl));
 	for(int i=1; i<=n; ++i){
 		s[i*2-1]=str[i],s[i*2]='#';
@@ -42,98 +43,117 @@ void manacher(){
 	for(int i=n; i; --i){
 		apn(fl[i],fl[i+1]+1);
 	}
+	delete[] s;
+	delete[] pr;
 }
 
 namespace SAM{
-	int cnt,lst,cnd,dfn[N<<1],idx[N<<1],dep[N<<1],fa[N<<1][20];
-	std::vector <int> g[N<<1];
+	int cnt,lst,cnd,dfn[N<<1],idx[N<<1],dep[N<<1];
+	int fa[N<<1],sz[N<<1],son[N<<1],top[N<<1];
+	int odgr[N<<1],*g[N<<1];
 	struct node{
-		int len,c[26];
+		int lk,len,c[26];
 	}tr[N<<1];
 	struct _init{
-		_init(){memset(fa,-1,sizeof(fa));}
+		_init(){tr[0].lk=-1;}
 	}_init_;
 
 	int insert(const int c){
 		int p=lst,k=lst=++cnt;
 		tr[k].len=tr[p].len+1;
-		for(; ~p&&!tr[p].c[c]; p=fa[p][0]){
+		for(; ~p&&!tr[p].c[c]; p=tr[p].lk){
 			tr[p].c[c]=k;
 		}
-		if(p==-1){
-			fa[k][0]=0; return k;
-		}
+		if(p==-1) return k;
 		int q=tr[p].c[c];
-		if(tr[q].len==tr[p].len+1) fa[k][0]=q;
+		if(tr[q].len==tr[p].len+1) tr[k].lk=q;
 		else{
 			tr[++cnt]=tr[q];
 			tr[cnt].len=tr[p].len+1;
-			fa[cnt][0]=fa[q][0];
-			for(; ~p&&tr[p].c[c]==q; p=fa[p][0]){
+			for(; ~p&&tr[p].c[c]==q; p=tr[p].lk){
 				tr[p].c[c]=cnt;
 			}
-			fa[q][0]=fa[k][0]=cnt;
+			tr[q].lk=tr[k].lk=cnt;
 		}
 		return k;
 	}
 
-	void dfs_fa(const int x){
-		idx[dfn[x]=++cnd]=x;
-		for(int i=1; ~fa[x][i-1]; ++i){
-			fa[x][i]=fa[fa[x][i-1]][i-1];
+	void dfs_son(const int x){
+		for(int i=0; i<odgr[x]; ++i){
+			const int y=g[x][i];
+			dep[y]=dep[x]+1;
+			dfs_son(y);
+			if(!son[x]||sz[y]>sz[son[x]]) son[x]=y;
+			sz[x]+=sz[y];
 		}
-		for(std::vector <int> ::iterator it=g[x].begin(); it!=g[x].end(); ++it){
-			dep[*it]=dep[x]+1;
-			dfs_fa(*it);
+	}
+	void dfs_top(const int x,const int t){
+		idx[dfn[x]=++cnd]=x;
+		top[x]=t;
+		if(son[x]) dfs_top(son[x],top[x]);
+		for(int i=0; i<odgr[x]; ++i){
+			if(g[x][i]!=son[x]) dfs_top(g[x][i],g[x][i]);
 		}
 	}
 	void build(){
 		for(int i=1; i<=cnt; ++i){
-			assert(~fa[i][0]);
-			g[fa[i][0]].push_back(i);
+			++odgr[fa[i]=tr[i].lk];
 		}
-		dfs_fa(0);
+		for(int i=0; i<=cnt; ++i){
+			if(!odgr[i]) continue;
+			g[i]=new int[odgr[i]];
+			odgr[i]=0;
+		}
+		for(int i=1; i<=cnt; ++i){
+			int f=tr[i].lk;
+			g[f][odgr[f]++]=i;
+		}
+		dfs_son(0);
+		dfs_top(0,0);
 	}
-	int getlca(int x,int y){
-		if(dep[x]<dep[y]) std::swap(x,y);
-		for(int d=dep[x]-dep[y],i=0; i<20; ++i){
-			if(d>>i&1) x=fa[x][i];
+	inline int getlca(int x,int y){
+		while(top[x]!=top[y]){
+			if(dep[top[x]]>dep[top[y]]) x=fa[top[x]];
+			else y=fa[top[y]];
 		}
-		if(x==y) return x;
-		for(int i=19; ~i; --i){
-			if(fa[x][i]!=fa[y][i])
-				x=fa[x][i],y=fa[y][i];
-		}
-		return fa[x][0];
+		return dep[x]<dep[y]?x:y;
 	}
-	void getcommon(const int p1,const int l1,const int p2,const int l2,int &x,int &y){
+	inline int getcommon(const int p1,const int l1,const int p2,const int l2){
 		int lca=getlca(p1,p2);
-		x=std::max(tr[p1].len-l1,tr[p2].len-l2);
-		y=tr[lca].len;
+		return std::min(tr[lca].len,std::min(l1,l2));
 	}
 
-	int solve(const int p,const int len){
-		static int dl[N];
+	int bsearch(const int p,const int len){
+		int l=dfn[top[p]],r=dfn[p],mid;
+		while(l!=r){
+			mid=(l+r)>>1;
+			if(tr[idx[mid]].len>=len) r=mid;
+			else l=mid+1;
+		}
+		return idx[l];
+	}
+	void getf(int &p,const int len){
+		while(~fa[top[p]]&&tr[fa[top[p]]].len>=len)
+			p=fa[top[p]];
+	}
+	int solve(int p,const int len){
+		static int dl[N<<1];
 		static std::set <int> sd;
+		getf(p,len);
+		p=bsearch(p,len);
 		std::set <int> ::iterator it=sd.lower_bound(dfn[p]);
 		int ans=0;
 		if(it==sd.end()&&it==sd.begin()){
 		}else if(it==sd.end()||it==sd.begin()){
 			if(it==sd.end()) --it;
-			int x,y;
-			getcommon(idx[*it],dl[*it],p,len,x,y);
-			ans=y-x;
+			ans=getcommon(idx[*it],dl[*it],p,len);
 		}else{
-			int x1,y1,x2,y2;
-			getcommon(idx[*it],dl[*it],p,len,x2,y2);
+			int r1=getcommon(idx[*it],dl[*it],p,len);
 			--it;
-			getcommon(idx[*it],dl[*it],p,len,x1,y1);
-			if(x1<y2||x2<y1)
-				ans=std::max(y1,y2)-std::min(x1,x2);
-			else
-				ans=std::max(0,y1-x1)+std::max(0,y2-x2);
+			int r2=getcommon(idx[*it],dl[*it],p,len);
+			ans=std::max(r1,r2);
 		}
-		dl[dfn[p]]=len;
+		apx(dl[dfn[p]],len);
 		sd.insert(it,dfn[p]);
 		return len-std::max(0,ans);
 	}
@@ -141,6 +161,9 @@ namespace SAM{
 
 int main(){
 	n=nxi();
+	for(int i=2; i<=n; ++i){
+		lg2[i]=lg2[i>>1]+1;
+	}
 	scanf("%s",str+1);
 	manacher();
 	for(int i=1; i<=n; ++i){
