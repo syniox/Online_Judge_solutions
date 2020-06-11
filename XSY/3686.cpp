@@ -2,9 +2,6 @@
 #include <cstdio>
 #include <cstring>
 #include <cassert>
-#include <vector>
-#include <fstream>
-#include <set>
 typedef long long lint;
 const int N=3e5+5;
 int n,ans,fl[N],pos[N],lg2[N<<1];
@@ -62,6 +59,7 @@ namespace SAM{
 		int p=lst,k=lst=++cnt;
 		tr[k].len=tr[p].len+1;
 		for(; ~p&&!tr[p].c[c]; p=tr[p].lk){
+			assert(c>=0&&c<26);
 			tr[p].c[c]=k;
 		}
 		if(p==-1) return k;
@@ -87,12 +85,12 @@ namespace SAM{
 			sz[x]+=sz[y];
 		}
 	}
-	void dfs_top(const int x,const int t){
+	void dfs_top(const int x){
+		top[x]=son[fa[x]]==x?top[fa[x]]:x;
 		idx[dfn[x]=++cnd]=x;
-		top[x]=t;
-		if(son[x]) dfs_top(son[x],top[x]);
+		if(son[x]) dfs_top(son[x]);
 		for(int i=0; i<odgr[x]; ++i){
-			if(g[x][i]!=son[x]) dfs_top(g[x][i],g[x][i]);
+			if(g[x][i]!=son[x]) dfs_top(g[x][i]);
 		}
 	}
 	void build(){
@@ -109,53 +107,28 @@ namespace SAM{
 			g[f][odgr[f]++]=i;
 		}
 		dfs_son(0);
-		dfs_top(0,0);
-	}
-	inline int getlca(int x,int y){
-		while(top[x]!=top[y]){
-			if(dep[top[x]]>dep[top[y]]) x=fa[top[x]];
-			else y=fa[top[y]];
-		}
-		return dep[x]<dep[y]?x:y;
-	}
-	inline int getcommon(const int p1,const int l1,const int p2,const int l2){
-		int lca=getlca(p1,p2);
-		return std::min(tr[lca].len,std::min(l1,l2));
+		dfs_top(0);
 	}
 
-	int bsearch(const int p,const int len){
-		int l=dfn[top[p]],r=dfn[p],mid;
-		while(l!=r){
-			mid=(l+r)>>1;
-			if(tr[idx[mid]].len>=len) r=mid;
-			else l=mid+1;
-		}
-		return idx[l];
-	}
-	void getf(int &p,const int len){
+	int solve(int p,int len){
+		static int dl[N<<1];
 		while(~fa[top[p]]&&tr[fa[top[p]]].len>=len)
 			p=fa[top[p]];
-	}
-	int solve(int p,const int len){
-		static int dl[N<<1];
-		static std::set <int> sd;
-		getf(p,len);
-		p=bsearch(p,len);
-		std::set <int> ::iterator it=sd.lower_bound(dfn[p]);
-		int ans=0;
-		if(it==sd.end()&&it==sd.begin()){
-		}else if(it==sd.end()||it==sd.begin()){
-			if(it==sd.end()) --it;
-			ans=getcommon(idx[*it],dl[*it],p,len);
-		}else{
-			int r1=getcommon(idx[*it],dl[*it],p,len);
-			--it;
-			int r2=getcommon(idx[*it],dl[*it],p,len);
-			ans=std::max(r1,r2);
+		{
+			int l=dfn[top[p]],r=dfn[p],mid;
+			while(l!=r){
+				mid=(l+r)>>1;
+				if(tr[idx[mid]].len>=len) r=mid;
+				else l=mid+1;
+			}
+			p=idx[l];
 		}
-		apx(dl[dfn[p]],len);
-		sd.insert(it,dfn[p]);
-		return len-std::max(0,ans);
+		int ans=0;
+		for(; len>dl[p]; apn(len,tr[p=fa[p]].len)){
+			ans+=len-std::max(tr[fa[p]].len,dl[p]);
+			dl[p]=len;
+		}
+		return ans;
 	}
 }
 
