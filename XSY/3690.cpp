@@ -42,7 +42,7 @@ void dij(const int s,int dp[33][1<<16]){
 	static bool vis[33][1<<16];
 	std::priority_queue <data> pq;
 	for(int i=1; i<=icnt; ++i){
-		memset(dp[i],10,sizeof(dp[i]));
+		memset(dp[i],60,sizeof(dp[i]));
 	}
 	memset(vis,0,sizeof(vis));
 	pq.push((data){s,key[ivl[s]],0});
@@ -52,7 +52,7 @@ void dij(const int s,int dp[33][1<<16]){
 		if(vis[x.x][x.t]) continue;
 		vis[x.x][x.t]=1;
 		for(int i=1; i<=icnt; ++i){
-			int st_t=x.t|key[i],v=x.dis+idis[ivl[x.x]][ivl[i]];
+			int st_t=x.t|key[ivl[i]],v=x.dis+idis[ivl[x.x]][ivl[i]];
 			if(door[ivl[i]]&~st_t) continue;
 			if(dp[i][st_t]>v){
 				dp[i][st_t]=v;
@@ -64,20 +64,24 @@ void dij(const int s,int dp[33][1<<16]){
 
 void getans(){
 	static int ians[33][33];
-	memset(ians,10,sizeof(ians));
+	memset(ians,60,sizeof(ians));
 	for(int i=1; i<=icnt; ++i){
 		for(int j=1; j<=icnt; ++j){
 			for(int k=0; k<1<<q; ++k)
 				apn(ians[i][j],idp[i][j][k]);
 		}
 	}
-	memset(ans,10,sizeof(ans));
+	memset(ans,60,sizeof(ans));
 	for(int i=1; i<=n; ++i){
 		if(door[i]) continue;
 		for(int j=1; j<=n; ++j){
-			ans[i][j]=idis[i][j];
+			if(!(door[j]&~key[i])) ans[i][j]=idis[i][j];
 			for(int k=1; k<=icnt; ++k){
-				if(door[k]) continue;
+				if(door[ivl[k]]) continue;
+				if(door[j]||key[j]){
+					apn(ans[i][j],idis[i][ivl[k]]+ians[k][idx[j]]);
+					continue;
+				}
 				for(int l=1; l<=icnt; ++l){
 					apn(ans[i][j],idis[i][ivl[k]]+ians[k][l]+idis[ivl[l]][j]);
 				}
@@ -88,34 +92,35 @@ void getans(){
 
 int main(){
 	n=nxi(),m=nxi(),q=nxi();
-	memset(idis,10,sizeof(idis));
+	memset(idis,60,sizeof(idis));
+	for(int i=1; i<=n; ++i)
+		idis[i][i]=0;
 	for(int i=1; i<=m; ++i){
-		int x=nxi(),y=nxi();
-		idis[x][y]=idis[y][x]=nxi();
+		int x=nxi(),y=nxi(),v=nxi();
+		apn(idis[x][y],v);
+		apn(idis[y][x],v);
 	}
 	for(int i=0; i<q; ++i){
 		door[nxi()]|=1<<i,key[nxi()]|=1<<i;
 	}
-	for(int i=1; i<=m; ++i){
+	for(int i=1; i<=n; ++i){
 		if(door[i]||key[i]) ivl[++icnt]=i,idx[i]=icnt;
 	}
 	for(int i=1; i<=n; ++i){
 		if(idx[i]) continue;
 		for(int j=1; j<=n; ++j){
 			for(int k=1; k<=n; ++k){
-				if(!(door[k]&~key[j])){
-					apn(idis[j][k],idis[j][i]+idis[i][k]);
-				}
+				apn(idis[j][k],idis[j][i]+idis[i][k]);
 			}
 		}
 	}
 	for(int i=1; i<=icnt; ++i){
-		if(!key[ivl[i]]) dij(i,idp[i]);
+		if(!door[ivl[i]]) dij(i,idp[i]);
 	}
 	getans();
 	for(int i=nxi(); i; --i){
 		int x=nxi(),y=nxi();
-		printf("%d\n",ans[x][y]<1e8?ans[x][y]:-1);
+		printf("%d\n",ans[x][y]<1e9?ans[x][y]:-1);
 	}
 	return 0;
 }
