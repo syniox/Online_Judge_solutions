@@ -2,10 +2,11 @@
 #include <cstdio>
 #include <cstring>
 #include <cassert>
-#include <ctime>
+#include <unistd.h>
+#include <sys/mman.h>
 #include <set>
 typedef long long lint;
-const int N=1e6+5;
+const int N=1e5+5;
 int n,m,q;
 bool used[N];
 struct blk{
@@ -21,13 +22,16 @@ namespace utils{
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 	template <class T> inline void apn(T &x,const T y){x=x<y?x:y;}
 	template <class T> inline void apx(T &x,const T y){x=x>y?x:y;}
+	char *ibuf;
+	struct _Init{
+		_Init(){ibuf=(char*)mmap(0,lseek(0,0,SEEK_END),PROT_READ,MAP_PRIVATE,0,0);}
+	}_init;
 	inline int nxi(){
 		int x=0;
 		char c;
-		while(((c=getchar())>'9'||c<'0')&&c!='-');
-		const bool f=c=='-'&&(c=getchar());
-		while(x=x*10-48+c,(c=getchar())>='0'&&c<='9');
-		return f?-x:x;
+		while((c=*ibuf++)>'9'||c<'0');
+		while(x=x*10-48+c,(c=*ibuf++)>='0'&&c<='9');
+		return x;
 	}
 }
 using namespace utils;
@@ -37,11 +41,17 @@ void set_blk(int x,int y,int id){
 	s2[y-x+m+1].insert((blk){x,id});
 }
 void getpre(std::set <blk> ::iterator &it,std::set <blk> &st,const int x){
+	if(st.size()==2){
+		it=st.begin(); return;
+	}
 	it=st.upper_bound((blk){x,0});
 	--it;
 	while(used[it->id]) st.erase(it--);
 }
 void getnxt(std::set <blk> ::iterator &it,std::set <blk> &st,const int x){
+	if(st.size()==2){
+		it=st.end(),--it; return;
+	}
 	it=st.upper_bound((blk){x,0});
 	while(used[it->id]) st.erase(it++);
 }
@@ -107,7 +117,6 @@ int main(){
 	freopen("d.in","r",stdin);
 #endif
 	m=nxi(),n=nxi(),q=nxi();
-	clock_t t=clock();
 	for(int i=1; i<=q; ++i){
 		int x=nxi(),y=nxi();//右上角
 		set_blk(x,y,i);
@@ -118,8 +127,6 @@ int main(){
 	for(int i=1; i<=n; ++i){
 		set_blk(0,i,0),set_blk(m+1,i,0);
 	}
-	clock_t t1=clock();
-	eprintf("%.3lf\n",((double)(t1-t))/CLOCKS_PER_SEC);
 	//向左上，右上，右下，左下走,点坐标*2
 	lint ans=0;
 	for(int x=m,y=0,d=0; q;){//考虑get整体-1
@@ -160,8 +167,6 @@ int main(){
 			}
 		}
 	}
-	eprintf("%.3lf\n",((double)(clock()-t1))/CLOCKS_PER_SEC);
-	eprintf("tot: %.3lf\n",((double)(clock()-t))/CLOCKS_PER_SEC);
 	printf("%lld\n",ans);
 	return 0;
 }
