@@ -8,8 +8,8 @@ using namespace std;
 typedef long long lint;
 const int N=1e6+5;
 int n,m,mod,invn,pwg[N],invg[N];
-int sumn,summ,ans;
-bool n0,m0,vn[N],nxt[N],vm[N<<1];
+int g,sumn,summ,ans,nxt[N];
+bool n0,m0,vn[N],vm[N<<1];
 vector <int> abuk[N];
 
 namespace utils{
@@ -48,9 +48,9 @@ bool getv(bool *v,int &n,int &s){
 		}
 	}
 	invn=fpow(n,mod-2);
-	int offs=(lint)s*invn%mod;
 	memset(v,0,mod);
 	bool have_0=0;
+	int offs=(lint)s*invn%mod;
 	for(int i=1; i<=n; ++i){
 		int tmp=(buk[i]-offs+mod)%mod;
 		if(!tmp) have_0=1;
@@ -59,10 +59,35 @@ bool getv(bool *v,int &n,int &s){
 	return have_0;
 }
 
+int getg(const int mod){
+	static int cnp,prm[N];
+	static bool npr[N];
+	for(int i=2; i<mod; ++i){
+		if(!npr[i]) prm[++cnp]=i;
+		for(int j=1; j<=cnp&&i*prm[j]<mod; ++i){
+			npr[i*prm[j]]=1;
+			if(i%prm[j]==0) break;
+		}
+	}
+	int cnt=0;
+	for(int i=1; i<=cnp; ++i){
+		if((mod-1)%prm[i]==0) prm[++cnt]=prm[i];
+	}
+	for(int i=2; i<mod; ++i){
+		bool f=1;
+		for(int j=1; f&&j<=cnt; ++j){
+			f&=fpow(i,(mod-1)/prm[j])!=1;
+		}
+		if(f) return i;
+	}
+	return 0;
+}
+
 int main(){
 	n=nxi(),m=nxi(),mod=nxi();
+	g=getg(mod);
 	invg[1]=0,pwg[0]=1;
-	for(int j=1,i=2; i!=1; ++j,i=(i<<1)%mod){
+	for(int j=1,i=g; i!=1; ++j,i=(lint)i*g%mod){
 		pwg[j]=i,invg[i]=j;
 	}
 	n-=n0=getv(vn,n,sumn);
@@ -72,16 +97,26 @@ int main(){
 		else printf("1\n0 %lld\n",(lint)summ*invn%mod);
 		return 0;
 	}
-	for(int i=1,j=0; i<mod; ++i){
-		while(j&&vn[j]!=vn[i]) j=nxt[j-1];
-		nxt[i]=j+=vn[j]==vn[i];
+	if(m+m0==1){
+		int x=0;
+		if(m){
+			for(; !vm[x]; ++x);
+			x=pwg[x];
+		}
+		abuk[0].push_back((x+(lint)summ*invn)%mod);
 	}
-	memcpy(vm+mod,vm,mod);
-	for(int i=0,j=0; i<mod*2-1; ++i){
-		while(j&&vn[j]!=vm[i]) j=nxt[j-1];
-		if((j+=vn[j]==vm[i])==mod){
-			j=nxt[j-1];
-			int resa=pwg[i-mod+1];
+	const int kmplen=mod-1;
+	nxt[0]=-1;
+	for(int i=1,j=-1; i<kmplen; ++i){
+		while(~j&&vn[j+1]!=vn[i]) j=nxt[j];
+		nxt[i]=j+=vn[j+1]==vn[i];
+	}
+	memcpy(vm+kmplen,vm,kmplen);
+	for(int i=0,j=-1; i<(kmplen)*2-1; ++i){
+		while(~j&&vn[j+1]!=vm[i]) j=nxt[j];
+		if((j+=vn[j+1]==vm[i])==kmplen-1){
+			j=nxt[j];
+			int resa=pwg[i-mod+2];
 			assert(resa);
 			if(n+n0==mod){
 				for(int k=0; k<mod; ++k)
