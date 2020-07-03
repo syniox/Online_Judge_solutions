@@ -36,7 +36,7 @@ struct num0{
 	num0(int val,int cnt0):v(val),c0(cnt0){}
 	num0():v(1),c0(0){}
 	void operator=(const int v){
-		if(v==0) c0=0,this->v=1;
+		if(v==0) c0=1,this->v=1;
 		else this->v=v,c0=0;
 	}
 	num0 qinv()const{
@@ -65,22 +65,19 @@ int main(){
 	n=nxi(),m=nxi();
 	for(int i=1; i<1<<m; ++i) dp[i]=1;
 	while(n--){
-		static int v[1<<K];
+		static int v[1<<K],tw[1<<K];
 		static num0 w[1<<K],iw[1<<K];
 		int q=nxi(),sum=0;
 		//getwgt
 		for(int i=0; i<q; ++i){
-			v[1<<i]=nxi(),w[1<<i]=nxi();
-			sum+=w[1<<i].qval();
+			v[1<<i]=nxi(),tw[1<<i]=nxi();
+			sum+=tw[1<<i];
 		}
-		for(int i=0; i<q; ++i){
-			w[1<<i]=w[1<<i]*inv[sum];
-			iw[1<<i]=w[1<<i].qinv();
-		}
-		for(int lb,i=1; i<1<<q; ++i){
-			if(i==(lb=i&-i)) continue;
-			w[i]=w[i^lb]*w[lb];
-			iw[i]=iw[i^lb]*iw[lb];
+		for(int lb,i=0; i<1<<q; ++i){
+			if(i==(lb=i&-i)) tw[i]=(lint)tw[i]*inv[sum]%mod;
+			else tw[i]=(tw[i^lb]+tw[lb])%mod;
+			w[i]=tw[i];
+			iw[i]=w[i].qinv();
 		}
 		//w'[i]=\prod_ {j \sub i} w[j]^ {-1^ {|i|-|j|}}
 		for(int i=1; i<1<<q; i<<=1){
@@ -97,22 +94,27 @@ int main(){
 			dp[v[i]]*=w[i];
 		}
 	}
+	for(int i=1; i<1<<m; i<<=1){
+		for(int j=0; j<1<<m; j+=i<<1){
+			for(int k=0; k<i; ++k){
+				dp[j+k+i]*=dp[j+k];
+			}
+		}
+	}
 	for(int i=0; i<1<<m; ++i){
 		res[i]=dp[i].qval();
 	}
 	for(int i=1; i<1<<m; i<<=1){
 		for(int j=0; j<1<<m; j+=i<<1){
 			for(int k=0; k<i; ++k){
-				res[j+k]=(res[j+k]-res[j+k+i]+mod)%mod;
+				res[j+k+i]=(res[j+k+i]-res[j+k]+mod)%mod;
 			}
 		}
 	}
 	int ans=0;
 	for(int i=0; i<1<<m; ++i){
-		eprintf("%d ",res[i]);
 		ans^=res[i];
 	}
-	eprintf("\n");
 	printf("%d\n",ans);
 	return 0;
 }
