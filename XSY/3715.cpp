@@ -44,7 +44,7 @@ namespace G{
 	inline void psh(const int x){
 		if(tag[x]!=1){
 			dp[x]=(lint)dp[x]*tag[x]%mod;
-			if(xdep[x]!=dep[x]){
+			if(xdep[x]>dep[x]){
 				tag[idx[dfn[x]+1]]=(lint)tag[idx[dfn[x]+1]]*tag[x]%mod;
 			}
 			tag[x]=1;
@@ -72,13 +72,13 @@ namespace G{
 		if(son[x]) dfs_ans(son[x]);
 		if(x==1){
 			memset(abuk+1,0,xdep[1]*sizeof(abuk[0]));
+			psh(1);
 			for(int s=1,i=1; i<=xdep[x]; ++i){
 				int p=idx[dfn[x]+i];
 				psh(p);
 				abuk[i][0]=s;
 				abuk[i][1]=dp[p];
 				s=(s+dp[p])%mod;
-				eprintf("%d: %d %d %d\n",i,abuk[i][0],abuk[i][1],abuk[i][2]);
 			}
 		}
 		for(int i=fir[x]; i; i=eg[i].nx){
@@ -89,6 +89,11 @@ namespace G{
 			const int depy=xdep[y]-dep[x];
 			for(int j=1; j<=depy; ++j){//最长深度为d的方案数
 				int a1=idx[dfn[x]+j],a2=idx[dfn[y]+j-1];
+				if(x==1){
+					abuk[j][2]=(lint)abuk[j][2]*tag[a1]%mod;
+					abuk[j][1]=(lint)abuk[j][1]*tag[a1]%mod;
+					abuk[j][0]=(lint)abuk[j][0]*tag[a1]%mod;
+				}
 				psh(a1),psh(a2);
 				pv1[j]=(pv1[j-1]+dp[a1])%mod;
 				pv2[j]=(pv2[j-1]+dp[a2])%mod;
@@ -101,18 +106,20 @@ namespace G{
 			}
 			if(xdep[y]<xdep[x]){
 				int p=idx[dfn[x]+depy+1];
-				tag[p]=(lint)tag[p]*pv2[xdep[y]-dep[x]]%mod;
+				tag[p]=(lint)tag[p]*pv2[depy]%mod;
 			}
+			/*
 			eprintf("---\n");
 			for(int i=1; i<=xdep[x]; ++i){
 				eprintf("%d: %d %d %d\n",i,abuk[i][0],abuk[i][1],abuk[i][2]);
 			}
+			*/
 		}
 		if(x==1){
 			for(int i=1; i<=xdep[1]; ++i){
 				if(tag[idx[i+1]]!=1){
-					abuk[i][2]=((lint)abuk[i][2]*tag[i+1])%mod;
-					tag[i+2]=(lint)tag[i+2]*tag[i+1]%mod;
+					abuk[i][2]=((lint)abuk[i][2]*tag[idx[i+1]])%mod;
+					tag[idx[i+2]]=(lint)tag[idx[i+2]]*tag[idx[i+1]]%mod;
 				}
 			}
 		}
@@ -132,8 +139,10 @@ int main(){
 		int ans=1;
 		for(int i=1; i<=G::xdep[1]; ++i){
 			ans=(ans+G::abuk[i][2])%mod;
+			//eprintf("%d ",(G::abuk[i][2]+mod)%mod);
 		}
-		printf("%d\n",ans);
+		//eprintf("\n");
+		printf("%d\n",(ans+mod)%mod);
 	}
 	return 0;
 }
