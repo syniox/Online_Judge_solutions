@@ -11,7 +11,6 @@ const int N=1e5+5;
 int n,q;
 string ans;
 char str[N];
-bool exist[26];
 
 namespace utils{
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -32,7 +31,7 @@ namespace SA{
 	int n,sa[N],rk[N];
 	char *str;
 	inline int qrk(const int x){
-		return x>n?0:rk[x];
+		return x>n?-1:rk[x];
 	}
 	inline void fsort(int *sa,const int *rk,const int *idx){
 		static int buk[N];
@@ -76,84 +75,56 @@ namespace SA{
 	}
 }
 
-bool chkvld(){
-	static bool use[N];
-	int cuse=0;
-	for(int lst='a'-1,i=n; i; --i){
-		exist[str[i]-'a']=1;
-		if(str[i]<lst) continue;
-		++cuse;
-		use[i]=1;
-		lst=str[i];
-	}
-	if(q>=n-cuse){
-		for(int r=n-q,i=1; r&&i<=n; ++i){
-			if(use[i]) --r,putchar(str[i]);
-		}
-		puts("");
-		return 0;
-	}
-	vector <int> fp;
-	for(int i=1; i<=n; ++i){
-		if(i==1||use[i]!=use[i-1]) fp.push_back(i);
-	}
-	if(q>=(int)fp.size()/2){
-		for(int i=1; i<=n; ++i){
-			if(use[i]) putchar(str[i]);
-		}
-		puts("");
-		return 0;
-	}
-	return 1;
-}
-
 int main(){
 	q=nxi();
 	scanf("%s",str+1);
 	n=strlen(str+1);
-	if(!chkvld()) return 0;
 	SA::build(str,n);
 	for(int lst=0,i=25; ~i; --i){
 		using SA::sa;
 		using SA::rk;
-		if(!exist[i]) continue;
 		std::priority_queue <int> pq;
-		int cnt=0,psum=0;
-		q-=str[lst+1]!='a'+i;
+		int cnt=0,psum=0,xr=0;
 		for(int pl=lst+1; pl<=n; ++pl){
 			if(str[pl]!='a'+i) continue;
 			int pr=pl;
 			for(; str[pr+1]=='a'+i; ++pr);
 			++cnt,psum+=pr-pl+1;
-			lst=pl=pr;
+			xr=pl=pr;
 		}
+		if(!cnt) continue;
+		cnt-=str[lst+1]=='a'+i;
 		if(cnt<q){
-			for(int i=1; i<=psum; ++i)
+			for(int j=1; j<=psum; ++j)
 				ans+=(char)('a'+i);
 			q-=cnt;
+			lst=xr;
 		}else{
 			cnt=0,psum=0;
-			int mx=0,mxrk=0;
-			for(int pl=1; pl<=n; ++pl){
+			int mx=0,mxrk=0,offs=0;
+			for(int pl=lst+1; pl<=n; ++pl){
 				if(str[pl]!='a'+i) continue;
 				int pr=pl;
 				for(; str[pr+1]=='a'+i; ++pr);
+				if(pl==lst+1){
+					offs=pr-pl+1,pl=pr;
+					continue;
+				}
 				int curc=psum+pr-pl+1;
-				apx(mx,curc);
-				if(mx==curc) apx(mxrk,rk[pl]);
+				if(mx<curc) mx=curc,mxrk=0;
+				if(mx==curc) apx(mxrk,rk[pr+1]);
 				psum+=pr-pl+1;
 				pq.push(-(pr-pl+1));
-				if((int)pq.size()>q){
+				if((int)pq.size()==q){
 					psum+=pq.top();
 					pq.pop();
 				}
+				pl=pr;
 			}
-			for(int j=1; j<=mx; ++j){
+			for(int j=1; j<=mx+offs; ++j){
 				ans+=(char)('a'+i);
 			}
-			int p=sa[mxrk];
-			for(; p<=n&&str[p]=='a'+i; ++p);
-			ans+=str+p;
+			if(mxrk) ans+=str+sa[mxrk];
 			break;
 		}
 	}
