@@ -47,7 +47,7 @@ namespace T1{
 			const int y=eg[i].to;
 			if(y==fa[x]) continue;
 			fa[y]=x;
-			dis[y]=dep[x]+eg[i].wi;
+			dis[y]=dis[x]+eg[i].wi;
 			dep[y]=dep[x]+1;
 			dfs_son(y);
 			if(sz[y]>sz[son[x]]) son[x]=y;
@@ -74,18 +74,19 @@ namespace T1{
 
 	int tick,tag[N];
 	vector<pair<int,lint> > vg[N];
+	bool vld[N];
 	lint *val,dpd[N],dpu[N];
 
 	inline void upd(const int x){
 		if(tag[x]!=tick){
 			dpd[x]=dpu[x]=1e15;
 			vg[x].clear();
+			tag[x]=tick;
 		}
 	}
 	inline void setf(const int x,const int f){
-		apn(dpd[x],val[x]);
+		apn(dpd[f],std::min<lint>(vld[x]?val[x]:1e15,dpd[x])+dis[x]-dis[f]);
 		vg[f].push_back(make_pair(x,dis[x]-dis[f]));
-		apn(dpd[f],dpd[x]+dis[x]-dis[f]);
 	}
 
 	void vmain(int *ls,const int cls,lint *val){
@@ -93,6 +94,9 @@ namespace T1{
 		T1::val=val;
 		++tick;
 		std::sort(ls+1,ls+cls+1,cmp_dfn);
+		for(int i=1; i<=cls; ++i){
+			vld[ls[i]]=1;
+		}
 		int top=0,cpb=0;
 		stk[++top]=ls[1];
 		upd(ls[1]);
@@ -100,7 +104,7 @@ namespace T1{
 			int lca=qlca(ls[i],stk[top]);
 			upd(lca),upd(ls[i]);
 			for(; top&&dep[stk[top]]>dep[lca]; --top){
-				setf(stk[top],top>1&&dep[stk[top-1]]<dep[lca]?stk[top-1]:lca);
+				setf(stk[top],top>1&&dep[stk[top-1]]>dep[lca]?stk[top-1]:lca);
 				pbuk[++cpb]=stk[top];
 			}
 			if(lca!=stk[top]) stk[++top]=lca;
@@ -114,17 +118,24 @@ namespace T1{
 		for(int pidx=cpb,x=pbuk[pidx]; pidx; x=pbuk[--pidx]){
 			static lint nl[N],nr[N];
 			const int sz=vg[x].size();
-			apn(abuk[x],val[x]+std::min(dpd[x],dpu[x]));
-			apn(dpu[x],val[x]);
+			if(vld[x]){
+				apn(abuk[x],val[x]+std::min(dpd[x],dpu[x]));
+				apn(dpu[x],val[x]);
+			}
 			for(int i=0; i<sz; ++i){
-				nl[i]=nr[i]=dpd[vg[x][i].first]+vg[x][i].second;
+				const int y=vg[x][i].first;
+				nl[i]=nr[i]=std::min<lint>(vld[y]?val[y]:1e15,dpd[y])+vg[x][i].second;
 			}
 			for(int i=1; i<=sz-1; ++i) apn(nl[i],nl[i-1]);
 			for(int i=sz-2; i>=0; --i) apn(nr[i],nr[i+1]);
 			for(int i=0; i<sz; ++i){
+				const int y=vg[x][i].first;
 				lint vl=i==0?1e14:nl[i-1],vr=i==sz-1?1e14:nr[i+1];
-				apn(dpu[vg[x][i].first],std::min(dpu[x],std::min(vl,vr))+vg[x][i].second);
+				apn(dpu[y],std::min(dpu[x],std::min(vl,vr))+vg[x][i].second);
 			}
+		}
+		for(int i=1; i<=cls; ++i){
+			vld[ls[i]]=0;
 		}
 	}
 }
@@ -204,12 +215,12 @@ int main(){
 	T1::dfs_top(1);
 	T2::dfs_main(1,n);
 	lint ans=0;
-	eprintf("abuk: ");
+	//eprintf("abuk: ");
 	for(int i=1; i<=n; ++i){
 		ans^=abuk[i];
-		eprintf("%lld ",abuk[i]);
+		//eprintf("%lld ",abuk[i]);
 	}
-	eprintf("\n");
+	//eprintf("\n");
 	printf("%lld\n",ans);
 	return 0;
 }
