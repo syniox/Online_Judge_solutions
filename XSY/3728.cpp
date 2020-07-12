@@ -5,9 +5,9 @@
 #include <algorithm>
 using namespace std;
 typedef long long lint;
-const int N=1e6+5,M=1e5+5;
+const int N=1e6+5;
 int n,m;
-char str[M];
+char str[N];
 
 namespace utils{
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -39,31 +39,38 @@ namespace S{
 		}
 		tr[p].s+=v;
 	}
-	lint build(){
-		static int que[N];
+	void build(){
+		static int que[N<<1];
 		int hd=0,tl=1;
-		lint ans=0;
 		while(hd!=tl){
 			int x=que[hd++],lk=tr[x].lk;
-			tr[x].s+=tr[lk].s;
 			for(int i=0; i<26; ++i){
 				int &y=tr[x].c[i];
-				if(y){
-					lint res=-1e18;
-					int j=lk;
-					for(; j&&!tr[j].c[i]; j=tr[j].lk){
-						apx(res,tr[j].dp);
-					}
-					j=tr[j].c[i];
-					res+=tr[j].s;
-					tr[y].dp=res;
-					apx(ans,res);
-					if(j!=y) tr[y].lk=j;
-					que[tl++]=y;
+				if(!y) continue;
+				lint res=tr[x].dp;
+				int j=lk;
+				for(; j&&!tr[j].c[i]; j=tr[j].lk){
+					apx(res,tr[j].dp);
 				}
+				if(x!=j){
+					tr[y].s+=tr[tr[j].c[i]].s;
+					tr[y].lk=tr[j].c[i];
+					res+=tr[tr[j].c[i]].s;
+				}
+				tr[y].dp=res;
+				que[tl++]=y;
 			}
 		}
-		return ans;
+		hd=0,tl=1;
+		while(hd!=tl){
+			int x=que[hd++],lk=tr[x].lk;
+			apx(tr[x].dp,tr[lk].dp);
+			for(int i=0; i<26; ++i){
+				int &y=tr[x].c[i];
+				if(!y) y=tr[lk].c[i];
+				else que[tl++]=y;
+			}
+		}
 	}
 }
 
@@ -76,16 +83,13 @@ int main(){
 	}
 	scanf("%s",str+1);
 	S::add(str,m,0);
-	lint ans=S::build();
-	apx(ans,0ll);
-	lint res=0;
+	S::build();
+	lint ans=0,res=0;
 	for(int p=0,i=1; i<=m; ++i){
 		using S::tr;
-		const int c=str[i]-'a';
-		for(; p&&!tr[p].c[c]; p=tr[p].lk);
-		p=tr[p].c[c];//unified
+		p=tr[p].c[str[i]-'a'];
 		res+=tr[p].s;
-		apx(ans,res);
+		apx(ans,std::max(tr[p].dp,res));
 	}
 	printf("%lld\n",ans);
 	return 0;
