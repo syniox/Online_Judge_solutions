@@ -7,7 +7,7 @@ using namespace std;
 typedef long long lint;
 const int N=105,L=1e3+5;
 const int mod=1e9+7;
-int n,va[N],vb[N],res[N],cta[N][L],ctb[N][L];
+int n,va[N],vb[N],cta[N][L],ctb[N][L];
 
 namespace utils{
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -52,11 +52,30 @@ int qcnt(int t,const int z){
 	for(; t%z==0; t/=z,++ans);
 	return ans;
 }
+inline int fpow(int x,lint t){
+	int ans=1;
+	for(; t; x=(lint)x*x%mod,t>>=1){
+		if(t&1) ans=(lint)ans*x%mod;
+	}
+	return ans;
+}
+inline lint smul(lint x,lint y,const lint mod){
+	lint ans=0;
+	bool f=(y<0)^(x<0);
+	if(y<0) y=-y;
+	for(; y; x=x*4%mod,y>>=2){
+		ans=(ans+x*(y&3))%mod;
+	}
+	ans=f?mod-ans:ans;
+	return ans;
+}
 
-int qans(const int p,const int tot){
-	static int tgt[L];
+int qans(const int p,const lint tot){
+	static lint tgt[L];
+	int ans=va[p];
 	for(int i=1; i<=D::cnt; ++i){
 		tgt[i]=qcnt(va[p],D::v[i])+qcnt(vb[p],D::v[i])*tot;
+		while(ans%D::v[i]==0) ans/=D::v[i];
 	}
 	for(int i=1; i<=n; ++i){
 		int cc=-1;
@@ -66,16 +85,15 @@ int qans(const int p,const int tot){
 				if(wa!=tgt[j]) return -1;
 				continue;
 			}
-			int curt=tgt[j]-wa;
+			lint curt=tgt[j]-wa;
 			if(curt<0||curt%wb) return -1;
 			curt/=wb;
 			if(cc==-1) cc=curt;
 			else if(cc!=curt) return -1;
 		}
 	}
-	int ans=1;
 	for(int i=1; i<=D::cnt; ++i){
-		while(tgt[i]--) ans=(lint)ans*D::v[i]%mod;
+		ans=(lint)ans*fpow(D::v[i],tgt[i])%mod;
 	}
 	return ans;
 }
@@ -119,24 +137,31 @@ bool sanmulp(){
 				numj-=cta[j][i]*ctb[1][1]-cta[j][1]*ctb[1][i];
 				int denomj=ctb[j][i]*ctb[1][1]-ctb[j][1]*ctb[1][i];
 				if(numj%denomj||numj/denomj<0) return puts("-1"),0;
-				return qans(j,numj/denomj),0;
+				return printf("%d\n",qans(j,numj/denomj)),0;
 			}
 		}
 	}
 	return 1;
 }
 
-int gcd(int x,int y){
-	return y?gcd(y,x%y):x;
-}
-int exgcd(int x,int y,int &a,int &b,const int c){
+lint exgcd(lint x,lint y,lint &a,lint &b){
 	if(!y){
-		a=c/x,b=0;
+		a=1,b=0;
 		return x;
 	}
-	int res=exgcd(y,x%y,a,b,c),tmp=a-(x/y)*b;
+	lint res=exgcd(y,x%y,a,b),tmp=a-(x/y)*b;
 	a=b,b=tmp;
 	return res;
+}
+
+bool merge(lint &m1,lint &r1,lint m2,lint r2){
+	lint a,b,g=exgcd(m1,-m2,a,b);
+	if((r2-r1)%g) return 0;
+	m1=m1/g*m2;
+	if(m1<0) m1=-m1;
+	a=smul(a,(r2-r1)/g,m1),b=smul(b,(r2-r1)/g,m1);
+	r1=((smul(b,m2,m1)+r2)%m1+m1)%m1;
+	return 1;
 }
 
 int main(){
@@ -147,6 +172,7 @@ int main(){
 	}
 	D::build();
 	if(!san0()) return 0;
+	if(!D::cnt) return printf("%d\n",qans(1,0)),0;
 	for(int i=1; i<=n; ++i){
 		for(int j=1; j<=D::cnt; ++j){
 			cta[i][j]=qcnt(va[i],D::v[j]);
@@ -157,16 +183,15 @@ int main(){
 	{
 		lint st=1,rs=0;
 		for(int i=1; i<=n; ++i){
-			int si=ctb[i][1],ri=cta[i][1]%si,a,b;
-			if((rs-ri)%gcd(st,si)) return puts("-1"),0;
-			exgcd(st,-si,a,b,ri-rs);
-			st=st/gcd(st,si)*si;
-			rs=((lint)b*si+ri)%st;
+			int si=ctb[i][1],ri=cta[i][1]%si;
+			if(!merge(st,rs,si,ri)) return puts("-1"),0;
 		}
 		for(int i=1; i<=n; ++i){
-			rs+=max(0ll,(cta[i][1]-rs+st-1)/st)*st;
+			while(rs<cta[i][1]) rs+=st;
 		}
-		assert((rs-cta[1][1])%ctb[1][1]==0);
+		for(int i=1; i<=n; ++i){
+			assert((rs-cta[i][1])%ctb[i][1]==0);
+		}
 		printf("%d\n",qans(1,(rs-cta[1][1])/ctb[1][1]));
 	}
 	return 0;
