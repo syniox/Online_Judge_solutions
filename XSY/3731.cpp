@@ -7,7 +7,7 @@
 typedef long long lint;
 using namespace std;
 const int N=1e5+5;
-int n,ms[N];
+int n,xw,ms[N];
 bool type[N];
 //0 用户 1 服务器
 
@@ -37,8 +37,8 @@ void apl_v(int &b1,int &v1,int &b2,int &v2,int b3,int v3,bool f){
 
 namespace G{
 	int rt,cnt,fir[N],sz[N],csz,xsz;
-	int tgt,rx[N],rn[N],bel[N];
-	vector <int> ch[N],ls[N],lsbl[N],lsx[N],lsn[N],lsblx[N],lsbln[N];
+	int tgt,rx[N],rn[N],bel[N],blans[N];
+	vector <int> ch[N],ls[N],lsbl[N],lsx[N],lsn[N];
 	bool vis[N],vld[N];
 	struct edge{
 		int to,wi,nx;
@@ -74,8 +74,13 @@ namespace G{
 
 	pair<int,int> dfs_path(const int x,const int f,const int rn,const int rx,const int bl){
 		bel[x]=bl,G::rn[x]=rn,G::rx[x]=rx;
-		if(!type[x]) ls[rt].push_back(x);
-		pair<int,int> ans=type[x]?make_pair(rn,rx):make_pair((int)1e9,0);
+		pair<int,int> ans((int)1e9+5,0);
+		if(type[x]){
+			ans=make_pair(rn,rx);
+			apx(blans[bl],rx-rn);
+		}else{
+			ls[rt].push_back(x);
+		}
 		sz[x]=1;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to,v=eg[i].wi;
@@ -94,19 +99,23 @@ namespace G{
 		x=qrt(x,csz);
 		vis[x]=1;
 		//get ms
-		int n1=1e9,n2=1e9,x1=0,x2=0;
+		int n1=1e9+5,n2=1e9+5,x1=0,x2=0,ans1=0,ans2=0;
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
 			if(vis[y]) continue;
+			blans[y]=0;
 			blr[y]=dfs_path(y,x,eg[i].wi,eg[i].wi,y);
 			apl_v(n1,n2,blr[y].first,0);
 			apl_v(x1,x2,blr[y].second,1);
+			apl_v(ans1,ans2,blans[y],1);
+			if(!type[x]) apx(ms[x],blans[y]);
 		}
 		for(vector <int> ::iterator it=ls[x].begin(); it!=ls[x].end(); ++it){
 			int mn=n1==blr[bel[*it]].first?n2:n1;
 			int mx=x1==blr[bel[*it]].second?x2:x1;
-			apx(ms[*it],max(mx-rn[*it],rx[*it]-mn));
-			if(type[x]==1) apx(ms[*it],rx[*it]-rn[*it]);
+			apx(ms[*it],blans[bel[*it]]==ans1?ans2:ans1);
+			if(mx) apx(ms[*it],max(rx[*it]-mn,mx-rn[*it]));
+			if(mx||type[x]) apx(ms[*it],rx[*it]-rn[*it]);
 		}
 		//get ls
 		sort(ls[x].begin(),ls[x].end(),cmp_rn);
@@ -114,13 +123,9 @@ namespace G{
 		lsbl[x].resize(cuser);
 		lsn[x].resize(cuser);
 		lsx[x].resize(cuser);
-		lsbln[x].resize(cuser);
-		lsblx[x].resize(cuser);
 		for(int i=0; i<cuser; ++i){
 			lsbl[x][i]=bel[ls[x][i]];
 			lsn[x][i]=rn[ls[x][i]],lsx[x][i]=rx[ls[x][i]];
-			lsbln[x][i]=blr[lsbl[x][i]].first;
-			lsblx[x][i]=blr[lsbl[x][i]].second;
 		}
 		for(int i=fir[x]; i; i=eg[i].nx){
 			const int y=eg[i].to;
@@ -133,20 +138,20 @@ namespace G{
 		int b1=0,v1=-1e9,b2=0,v2=-1e9;
 		const int cuser=ls[x].size();
 		for(int i=0; i<cuser; ++i){
-			int vn=lsbln[x][i]==v1?v2:v1;
+			int vn=lsbl[x][i]==b1?v2:v1;
 			vld[ls[x][i]]&=lsx[x][i]-vn>=tgt;
 			if(ms[ls[x][i]]<tgt&&lsx[x][i]-lsn[x][i]<tgt)
 				apl_v(b1,v1,b2,v2,lsbl[x][i],lsn[x][i],1);
 		}
 		b1=0,v1=2e9,b2=0,v2=2e9;
-		if(!type[x]) v1=0;
+		if(!type[x]&&ms[x]<tgt) v1=0;
 		for(int i=cuser-1; ~i; --i){
-			int vx=lsblx[x][i]==v1?v2:v1;
+			int vx=lsbl[x][i]==b1?v2:v1;
 			vld[ls[x][i]]&=max(lsx[x][i],vx)-lsn[x][i]>=tgt;
 			if(ms[ls[x][i]]<tgt&&lsx[x][i]-lsn[x][i]<tgt)
 				apl_v(b1,v1,b2,v2,lsbl[x][i],lsx[x][i],0);
 		}
-		vld[x]&=v2>1e9;
+		vld[x]&=!b1&&!b2;
 		for(vector<int>::iterator it=ch[x].begin(); it!=ch[x].end(); ++it){
 			dfs_vld(*it);
 		}
@@ -164,7 +169,7 @@ namespace G{
 }
 
 void qans(){
-	int l=0,r=1e9,mid;
+	int l=0,r=xw-1,mid;
 	while(l!=r){
 		mid=(l+r+1)>>1;
 		if(G::qvld(mid)) l=mid;
@@ -191,6 +196,7 @@ int main(){
 	}
 	for(int i=1; i<n; ++i){
 		const int a=nxi(),b=nxi(),v=nxi();
+		apx(xw,v);
 		G::add(a,b,v),G::add(b,a,v);
 	}
 	G::rt=G::build(1,n);
