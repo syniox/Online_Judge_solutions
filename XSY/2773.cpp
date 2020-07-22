@@ -30,7 +30,8 @@ namespace T{
 	queue<int> rm_ls;
 	int rt[N];
 	struct node{//小根堆
-		int wgt,ls,rs,v,sz;
+		int wgt,ls,rs,v;
+		int sz;
 	}tr[(int)(N*logN*1.5)];
 
 	inline void upd(const int k){
@@ -51,8 +52,8 @@ namespace T{
 	}
 
 	void split(const int k,int &h1,int &h2,const int v){
-		assert(k>=0);
 		if(!k) return h1=h2=0,void();
+		assert(tr[k].ls!=k&&tr[k].rs!=k);
 		if(tr[k].v<=v){
 			h1=k;
 			split(tr[k].rs,tr[k].rs,h2,v);
@@ -60,8 +61,7 @@ namespace T{
 			h2=k;
 			split(tr[k].ls,h1,tr[k].ls,v);
 		}
-		upd(h1);
-		upd(h2);
+		upd(k);
 	}
 	void merge(int &k,const int h1,const int h2){
 		if(!h1||!h2) return k=h1|h2,void();
@@ -72,13 +72,13 @@ namespace T{
 			k=h2;
 			merge(tr[k].ls,h1,tr[k].ls);
 		}
-		upd(k);
+		if(k) upd(k);//!!!why if?
 	}
 
-	void dfs_rem(const int x){
-		if(tr[x].ls) dfs_rem(tr[x].ls);
-		if(tr[x].rs) dfs_rem(tr[x].rs);
-		if(x) rm_ls.push(x);
+	void dfs_rem(const int k){
+		if(tr[k].ls) dfs_rem(tr[k].ls);
+		if(tr[k].rs) dfs_rem(tr[k].rs);
+		if(k) rm_ls.push(k);
 	}
 
 	void insert(int &rt,const int v){
@@ -95,23 +95,27 @@ namespace T{
 		return res;
 	}
 
-	void rebuild(int x,const int *id,const int len){
-		dfs_rem(rt[x]);
+	void rebuild(int &k,const int *id,const int len){
+		dfs_rem(k);
+		k=0;
 		for(int i=1; i<=len; ++i){
-			insert(rt[x],val[id[i]]);
+			insert(k,val[id[i]]);//!!!!!
 		}
 	}
 }
 
 namespace S{
-	const int alpha=0.68;
+	const double alpha=0.68;
 	int *rnd,rbuk[N],rcnt;
 	int rt;
 	double rvd,rvu;
 	int q,ql,qr,ans;
 	struct node{
-		int hgt,fa,sz,ls,rs,nhgt;
-		double rk,nrk,xrk;
+		int hgt,fa,ls,rs;
+		double rk;
+
+		int sz,nhgt;
+		double nrk,xrk;
 	}tr[N];
 
 	void upd(const int k){
@@ -124,7 +128,7 @@ namespace S{
 			apn(tr[k].nhgt,tr[ls].nhgt);
 			tr[k].sz+=tr[ls].sz;
 		}
-		if(tr[k].rs){
+		if(rs){
 			tr[k].xrk=tr[rs].xrk;
 			apn(tr[k].nhgt,tr[rs].nhgt);
 			tr[k].sz+=tr[rs].sz;
@@ -144,13 +148,15 @@ namespace S{
 		rbuk[++rcnt]=x;
 		if(tr[x].rs) dfs_nd(tr[x].rs);
 	}
-	int build_rbuk(const int l,const int r){
-		const int mid=(l+r)>>1;
-		T::rebuild(mid,rbuk+l-1,r-l+1);
-		if(l<mid) tr[mid].ls=build_rbuk(l,mid-1);
-		if(r>mid) tr[mid].rs=build_rbuk(mid+1,r);
-		upd(mid);
-		return mid;
+	int build_rbuk(const int f,const int l,const int r){
+		if(l>r) return 0;
+		const int mid=(l+r)>>1,k=rbuk[mid];
+		tr[k].fa=f;
+		T::rebuild(T::rt[k],rbuk+l-1,r-l+1);
+		tr[k].ls=build_rbuk(k,l,mid-1);
+		tr[k].rs=build_rbuk(k,mid+1,r);
+		upd(k);
+		return k;
 	}
 	void rebuild(int *x){
 		rcnt=0;
@@ -159,8 +165,7 @@ namespace S{
 		for(int i=1; i<=rcnt; ++i){
 			tr[rbuk[i]].rk=(rvu*i+rvd*(rcnt-i+1))/(rcnt+1);
 		}
-		*x=build_rbuk(1,rcnt);
-		tr[*x].fa=f;
+		*x=build_rbuk(f,1,rcnt);
 		touch(f);
 	}
 
@@ -181,25 +186,27 @@ namespace S{
 		return res;
 	}
 
-	void insert_t(int *k,int f,int x,double vd,double vu){
-		if(!*k){
-			*k=x;
+	void insert_t(int &k,int f,int x,double vd,double vu){
+		if(!k){
+			k=x;
 			tr[x].fa=f;
-			tr[x].nrk=tr[x].xrk=tr[x].rk=(vu+vd)/2;
+			tr[x].rk=(vu+vd)/2;
+			upd(x);
 			T::insert(T::rt[x],val[x]);
 			return;
 		}
-		T::insert(T::rt[*k],val[x]);
-		if(cmpstr(x,*k)){
-			insert_t(&tr[*k].ls,*k,x,vd,tr[*k].rk);
+		T::insert(T::rt[k],val[x]);
+		if(cmpstr(x,k)){
+			insert_t(tr[k].ls,k,x,vd,tr[k].rk);
 		}else{
-			insert_t(&tr[*k].rs,*k,x,tr[*k].rk,vu);
+			insert_t(tr[k].rs,k,x,tr[k].rk,vu);
 		}
-		const int lim=tr[*k].sz*alpha;
-		if(tr[*k].sz>5&&(tr[tr[*k].ls].sz>lim||tr[tr[*k].rs].sz>lim)){
-			rnd=k,rvu=vu,rvd=vd;
+		upd(k);
+		const int lim=tr[k].sz*alpha;
+		if(tr[k].sz>4&&(tr[tr[k].ls].sz>lim||tr[tr[k].rs].sz>lim)){//调大!!!
+			//assert(0);
+			rnd=&k,rvu=vu,rvd=vd;
 		}
-		upd(*k);
 	}
 
 	int qans(const int k){//1: 能否到左边 2: 能否到右边
@@ -212,20 +219,20 @@ namespace S{
 			ans+=val[q]<=qr;
 			if(tr[k].hgt>=ql) res|=qans(tr[k].ls)&1;
 			res|=qans(tr[k].rs)&2;
-		}else if(tr[q].rk<tr[k].nrk){
+		}else if(tr[q].rk<tr[k].rk){
 			int tmp=qans(tr[k].ls);
-			if(tmp&2&&tr[k].hgt>=ql){
+			if((tmp&2)&&tr[k].hgt>=ql){
 				ans+=val[k]<=qr;
 				tmp=(tmp&1)|(qans(tr[k].rs)&2);
-			}
+			}else tmp&=1;
 			res=tmp;
-		}else{//tr[q].rk>tr[k].xrk
+		}else{//tr[q].rk>tr[k].rk
 			int tmp=qans(tr[k].rs);
 			if(tmp&1){
 				ans+=val[k]<=qr;
 				if(tr[k].hgt>=ql){
 					tmp=(tmp&2)|(qans(tr[k].ls)&1);
-				}
+				}else tmp^=1;
 			}
 			res=tmp;
 		}
@@ -236,24 +243,26 @@ namespace S{
 		if(tr[k].nrk>tr[a].rk&&tr[k].xrk<=tr[b].rk) return tr[k].nhgt;
 		int res=1e9,ls=tr[k].ls,rs=tr[k].rs;
 		if(ls&&tr[a].rk<tr[ls].xrk) apn(res,qlcp(ls,a,b));
-		if(tr[k].rk>tr[a].rk&&tr[k].rk<=tr[b].rk) apn(res,tr[k].hgt);
+		if(tr[a].rk<tr[k].rk&&tr[k].rk<=tr[b].rk) apn(res,tr[k].hgt);
 		if(rs&&tr[rs].nrk<=tr[b].rk) apn(res,qlcp(rs,a,b));
 		return res;
 	}
 
 	void insert(const int x){
 		rnd=0;
-		tr[x].sz=1;
 		int pv=qprev(x),nx=qnext(x);
 		int hgt_pv=pv&&ch[x]==ch[pv]?qlcp(rt,fa[pv],fa[x])+1:0;
 		int hgt_nx=nx&&ch[x]==ch[nx]?qlcp(rt,fa[x],fa[nx])+1:0;
-		tr[x].hgt=tr[x].nhgt=hgt_pv;
+		tr[x].hgt=hgt_pv;
 		if(nx){
 			tr[nx].hgt=hgt_nx;
 			touch(nx);
 		}
-		insert_t(&rt,0,x,0,1e9);
-		if(rnd) rebuild(rnd);
+		insert_t(rt,0,x,0,1e9);
+		if(rnd){
+			rebuild(rnd);
+			//eprintf("rebuild%d: sz%d\n",*rnd,tr[*rnd].sz);
+		}
 	}
 
 	int ask(const int q,const int l,const int r){
@@ -281,6 +290,7 @@ void build_S(){
 		for(vector<int>::iterator it=son[x].begin(); it!=son[x].end(); ++it){
 			len[*it]=len[x]+1;
 			que[tl++]=*it;
+			//eprintf("insert: %d\n",*it);
 			S::insert(*it);
 		}
 	}
@@ -297,7 +307,7 @@ int main(){
 			int u=nxi()^ans,l=nxi(),r=nxi();
 			if(l>len[u]) puts("0");
 			else{
-				int res=S::ask(u,l,r);
+				int res=S::ask(u,l,r)+(l==0&&val[1]<=r);//node 1
 				if(res) ans=res;
 				printf("%d\n",res);
 			}
