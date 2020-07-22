@@ -72,7 +72,7 @@ namespace T{
 			k=h2;
 			merge(tr[k].ls,h1,tr[k].ls);
 		}
-		if(k) upd(k);//!!!why if?
+		upd(k);
 	}
 
 	void dfs_rem(const int k){
@@ -95,18 +95,32 @@ namespace T{
 		return res;
 	}
 
-	void rebuild(int &k,const int *id,const int len){
+	void rebuild(int &k,const int *v,const int len){
+		static int stk[N];
 		dfs_rem(k);
-		k=0;
-		for(int i=1; i<=len; ++i){
-			insert(k,val[id[i]]);//!!!!!
+		int top=0;
+		for(int i=1; i<=len; ++i){//stk[0]=0 极限
+			int p=newnode(v[i]);
+			if(top&&tr[stk[top]].wgt>tr[p].wgt){
+				while(top>1&&tr[stk[top-1]].wgt>tr[p].wgt){
+					upd(stk[top--]);
+				}
+				upd(stk[top]);
+				tr[p].ls=stk[top--];
+			}
+			if(top){
+				tr[stk[top]].rs=p;
+			}
+			stk[++top]=p;
 		}
+		while(top) upd(stk[top--]);
+		k=stk[1];
 	}
 }
 
 namespace S{
 	const double alpha=0.68;
-	int *rnd,rbuk[N],rcnt;
+	int *rnd,rbuk[N],vbuk[N],rcnt;
 	int rt;
 	double rvd,rvu;
 	int q,ql,qr,ans;
@@ -152,9 +166,11 @@ namespace S{
 		if(l>r) return 0;
 		const int mid=(l+r)>>1,k=rbuk[mid];
 		tr[k].fa=f;
-		T::rebuild(T::rt[k],rbuk+l-1,r-l+1);
 		tr[k].ls=build_rbuk(k,l,mid-1);
 		tr[k].rs=build_rbuk(k,mid+1,r);
+		inplace_merge(vbuk+l,vbuk+mid,vbuk+mid+1);
+		inplace_merge(vbuk+l,vbuk+mid+1,vbuk+r+1);
+		T::rebuild(T::rt[k],vbuk+l-1,r-l+1);
 		upd(k);
 		return k;
 	}
@@ -164,6 +180,7 @@ namespace S{
 		dfs_nd(*x);
 		for(int i=1; i<=rcnt; ++i){
 			tr[rbuk[i]].rk=(rvu*i+rvd*(rcnt-i+1))/(rcnt+1);
+			vbuk[i]=val[rbuk[i]];
 		}
 		*x=build_rbuk(f,1,rcnt);
 		touch(f);
@@ -203,8 +220,7 @@ namespace S{
 		}
 		upd(k);
 		const int lim=tr[k].sz*alpha;
-		if(tr[k].sz>4&&(tr[tr[k].ls].sz>lim||tr[tr[k].rs].sz>lim)){//调大!!!
-			//assert(0);
+		if(tr[k].sz>2&&(tr[tr[k].ls].sz>lim||tr[tr[k].rs].sz>lim)){
 			rnd=&k,rvu=vu,rvd=vd;
 		}
 	}
@@ -259,10 +275,7 @@ namespace S{
 			touch(nx);
 		}
 		insert_t(rt,0,x,0,1e9);
-		if(rnd){
-			rebuild(rnd);
-			//eprintf("rebuild%d: sz%d\n",*rnd,tr[*rnd].sz);
-		}
+		if(rnd) rebuild(rnd);
 	}
 
 	int ask(const int q,const int l,const int r){
@@ -290,7 +303,6 @@ void build_S(){
 		for(vector<int>::iterator it=son[x].begin(); it!=son[x].end(); ++it){
 			len[*it]=len[x]+1;
 			que[tl++]=*it;
-			//eprintf("insert: %d\n",*it);
 			S::insert(*it);
 		}
 	}
