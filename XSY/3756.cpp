@@ -5,7 +5,7 @@
 #include <algorithm>
 typedef long long lint;
 using namespace std;
-const int N=1e9,S=5e6+5;
+const int N=1e9,S=1e6+5;
 const int mod=1e9+7;
 int n,q,inv1q,pf[S];
 
@@ -60,7 +60,7 @@ int sieve_s::operator()(const int x){
 	vis[n/x]=1;
 	int ans=h(x);
 	for(int j,i=2; i<=x; i=j+1){
-		j=n/(n/i);
+		j=x/(x/i);
 		ans=(ans-lint(g(j)-g(i-1))*(*this)(x/i))%mod;
 	}
 	ans=(ans+mod)%mod;
